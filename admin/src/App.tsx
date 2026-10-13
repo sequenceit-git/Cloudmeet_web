@@ -443,168 +443,126 @@ export function App() {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Responsive Header */}
       <header className="glass-nav app-header">
-        {/* Header Top Row (Brand + Actions) */}
-        <div className="header-top-row">
+        <div className="app-header-inner">
+          {/* 1. Brand Section */}
           <div className="header-brand">
-            <div
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 10,
-                background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 0 15px rgba(99, 102, 241, 0.4)',
-                flexShrink: 0,
-              }}
-            >
+            <div className="brand-logo">
               <Video size={20} color="#ffffff" />
             </div>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span
-                  style={{
-                    fontSize: '1.15rem',
-                    fontWeight: 800,
-                    letterSpacing: '-0.02em',
-                    background: 'linear-gradient(to right, #ffffff, #cbd5e1)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                  }}
-                >
-                  {t.portalTitle}
-                </span>
-                <span
-                  className="badge hide-on-mobile"
-                  style={{
-                    background: 'rgba(99, 102, 241, 0.15)',
-                    color: '#818cf8',
-                    border: '1px solid rgba(99, 102, 241, 0.3)',
-                  }}
-                >
-                  {t.adminBadge}
-                </span>
+            <div className="brand-info">
+              <div className="brand-title-row">
+                <span className="brand-title">{t.portalTitle}</span>
+                <span className="badge-admin">{t.adminBadge}</span>
               </div>
-              <p className="hide-on-mobile" style={{ fontSize: '0.6875rem', color: 'var(--text-dim)' }}>
-                {t.portalSub}
-              </p>
+              <p className="brand-subtitle">{t.portalSub}</p>
             </div>
           </div>
 
-          {/* Quick Header Actions (Refresh, Language, Status, Logout) */}
+          {/* 2. Desktop Navigation Segmented Tabs */}
+          <nav className="header-nav header-nav-desktop">
+            <button
+              onClick={() => setActiveTab('hosts')}
+              className={`nav-tab-btn ${activeTab === 'hosts' ? 'active' : ''}`}
+            >
+              <Users size={16} />
+              <span>{t.navHosts}</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('meetings')}
+              className={`nav-tab-btn ${activeTab === 'meetings' ? 'active' : ''}`}
+            >
+              <Video size={16} />
+              <span>{t.navMeetings}</span>
+              {dashboardMetrics.activeMeetingsCount > 0 && (
+                <span className="nav-badge-pulse">{dashboardMetrics.activeMeetingsCount}</span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('trtc')}
+              className={`nav-tab-btn ${activeTab === 'trtc' ? 'active' : ''}`}
+            >
+              <Server size={16} />
+              <span>{t.navTrtc}</span>
+            </button>
+          </nav>
+
+          {/* 3. Utility Actions */}
           <div className="header-actions">
+            {/* TRTC Online Status Indicator */}
+            <div className="status-pill" title={t.trtcOnline}>
+              <div className="pulsing-dot" />
+              <span className="status-pill-text">TRTC</span>
+            </div>
+
             {/* Refresh Live Data */}
             <button
               onClick={fetchAllData}
               disabled={loadingData}
               title={lang === 'zh' ? '刷新实时数据' : 'Refresh live data'}
-              className="btn btn-secondary"
-              style={{ padding: '6px 10px', borderRadius: 8 }}
+              className="btn btn-secondary btn-icon"
             >
-              <RefreshCw size={14} className={loadingData ? 'pulsing-dot' : ''} />
+              <RefreshCw size={15} className={loadingData ? 'pulsing-dot' : ''} />
             </button>
 
             {/* Language Toggle Button */}
             <button
               onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')}
-              className="btn btn-secondary"
-              style={{
-                borderRadius: 20,
-                padding: '5px 10px',
-                fontSize: '0.75rem',
-                gap: 5,
-                borderColor: 'rgba(99, 102, 241, 0.3)',
-                color: 'var(--accent-cyan)',
-              }}
+              className="btn btn-secondary btn-lang"
+              title={lang === 'zh' ? '切换为英文' : 'Switch to Chinese'}
             >
               <Globe size={14} />
-              <strong>{lang === 'zh' ? '中文' : 'EN'}</strong>
+              <span>{lang === 'zh' ? '中文' : 'EN'}</span>
             </button>
 
-            {/* TRTC Online Pill (hidden on very small screens to preserve space) */}
-            <div
-              className="hide-on-mobile"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                background: 'rgba(16, 185, 129, 0.1)',
-                padding: '5px 10px',
-                borderRadius: 999,
-                border: '1px solid rgba(16, 185, 129, 0.2)',
-              }}
-            >
-              <div className="pulsing-dot" />
-              <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#34d399' }}>
-                TRTC
-              </span>
+            {/* Admin User Profile */}
+            <div className="admin-profile-pill">
+              <div className="admin-avatar">
+                {lang === 'zh' ? '管' : 'SA'}
+              </div>
+              <div className="admin-user-text">
+                <span className="admin-user-name">
+                  {lang === 'en' && adminUser.name === '超级管理员' ? t.superAdmin : (adminUser.name || t.superAdmin)}
+                </span>
+                <span className="admin-user-email">{adminUser.email}</span>
+              </div>
             </div>
 
-            {/* Admin Profile & Logout */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                borderLeft: '1px solid var(--border-subtle)',
-                paddingLeft: 10,
-              }}
+            {/* Logout Button */}
+            <button
+              onClick={handleLogout}
+              className="btn btn-secondary btn-logout"
+              title={t.logoutBtn}
             >
-              <div
-                style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 700,
-                  fontSize: '0.75rem',
-                  flexShrink: 0,
-                }}
-              >
-                管
-              </div>
-              <div className="hide-on-tablet">
-                <div style={{ fontSize: '0.75rem', fontWeight: 600 }}>{adminUser.name || t.superAdmin}</div>
-                <div style={{ fontSize: '0.6875rem', color: 'var(--text-dim)' }}>{adminUser.email}</div>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="btn btn-secondary"
-                title={t.logoutBtn}
-                style={{ padding: '6px 8px', borderRadius: 8, color: '#f87171' }}
-              >
-                <LogOut size={14} />
-              </button>
-            </div>
+              <LogOut size={15} />
+            </button>
           </div>
         </div>
 
-        {/* Navigation Tabs (Full width on mobile) */}
-        <nav className="header-nav">
+        {/* 4. Mobile Segmented Navigation Bar */}
+        <nav className="header-nav header-nav-mobile">
           <button
             onClick={() => setActiveTab('hosts')}
-            className={`btn ${activeTab === 'hosts' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ borderRadius: 8 }}
+            className={`nav-tab-btn ${activeTab === 'hosts' ? 'active' : ''}`}
           >
-            <Users size={15} /> {t.navHosts}
+            <Users size={15} />
+            <span>{t.navHosts}</span>
           </button>
           <button
             onClick={() => setActiveTab('meetings')}
-            className={`btn ${activeTab === 'meetings' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ borderRadius: 8 }}
+            className={`nav-tab-btn ${activeTab === 'meetings' ? 'active' : ''}`}
           >
-            <Video size={15} /> {t.navMeetings}
+            <Video size={15} />
+            <span>{t.navMeetings}</span>
+            {dashboardMetrics.activeMeetingsCount > 0 && (
+              <span className="nav-badge-pulse">{dashboardMetrics.activeMeetingsCount}</span>
+            )}
           </button>
           <button
             onClick={() => setActiveTab('trtc')}
-            className={`btn ${activeTab === 'trtc' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ borderRadius: 8 }}
+            className={`nav-tab-btn ${activeTab === 'trtc' ? 'active' : ''}`}
           >
-            <Server size={15} /> {t.navTrtc}
+            <Server size={15} />
+            <span>{t.navTrtc}</span>
           </button>
         </nav>
       </header>
