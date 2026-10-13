@@ -1,0 +1,18 @@
+{
+  "name": "cloudmeet-web-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "server",
+    "admin"
+  ],
+  "scripts": {
+    "dev": "concurrently -n \"SERVER,ADMIN\" -c \"cyan,magenta\" \"npm run server:dev\" \"npm run admin:dev\"",
+    "server:dev": "npm --prefix server run dev",
+    "admin:dev": "npm --prefix admin run dev",
+    "build": "npm --prefix server run build && npm --prefix admin run build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

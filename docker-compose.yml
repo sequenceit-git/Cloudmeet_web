@@ -1,0 +1,108 @@
+version: '3.8'
+
+# ==============================================================================
+# CloudMeet Production Stack (Connected to your EXISTING Traefik instance)
+# Domain: cloudmeet.sequenceit.software | Server: 69.62.75.165
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. CloudMeet Backend API Engine (Node.js + Express + TRTC UserSig)
+  # ----------------------------------------------------------------------------
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: cloudmeet-server
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cloudmeet}:${POSTGRES_PASSWORD:-cloudmeet_secure_pass_2026}@postgres:5432/${POSTGRES_DB:-cloudmeet_db}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-cloudmeet_production_jwt_secret_2026_xyz}
+      TRTC_SDK_APP_ID: ${TRTC_SDK_APP_ID:-1400000000}
+      TRTC_SECRET_KEY: ${TRTC_SECRET_KEY:-your_trtc_secret_key_here}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@cloudmeet.cn}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123456}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal-net
+      - traefik-net
+    labels:
+      - "traefik.enable=true"
+      # Expose through your existing Traefik instance
+      - "traefik.docker.network=${TRAEFIK_NETWORK:-traefik-net}"
+      # Route all /api and /health requests to Backend API (Priority 20)
+      - "traefik.http.routers.cloudmeet-api.rule=Host(`${DOMAIN:-cloudmeet.sequenceit.software}`) && (PathPrefix(`/api`) || PathPrefix(`/health`))"
+      - "traefik.http.routers.cloudmeet-api.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.cloudmeet-api.tls=true"
+      - "traefik.http.routers.cloudmeet-api.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-letsencrypt}"
+      - "traefik.http.routers.cloudmeet-api.priority=20"
+      - "traefik.http.services.cloudmeet-api.loadbalancer.server.port=5000"
+
+  # ----------------------------------------------------------------------------
+  # 2. CloudMeet Web Admin Panel (React 19 + Vite + Nginx Alpine)
+  # ----------------------------------------------------------------------------
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api/v1
+        VITE_TRTC_SDK_APP_ID: ${TRTC_SDK_APP_ID:-1400000000}
+        VITE_APP_TITLE: "CloudMeet 云会 - 管理后台"
+    container_name: cloudmeet-admin
+    restart: unless-stopped
+    depends_on:
+      - server
+    networks:
+      - internal-net
+      - traefik-net
+    labels:
+      - "traefik.enable=true"
+      # Expose through your existing Traefik instance
+      - "traefik.docker.network=${TRAEFIK_NETWORK:-traefik-net}"
+      # Route all frontend web traffic to Admin Nginx (Priority 10)
+      - "traefik.http.routers.cloudmeet-web.rule=Host(`${DOMAIN:-cloudmeet.sequenceit.software}`)"
+      - "traefik.http.routers.cloudmeet-web.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.cloudmeet-web.tls=true"
+      - "traefik.http.routers.cloudmeet-web.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-letsencrypt}"
+      - "traefik.http.routers.cloudmeet-web.priority=10"
+      - "traefik.http.services.cloudmeet-web.loadbalancer.server.port=80"
+
+  # ----------------------------------------------------------------------------
+  # 3. PostgreSQL Database
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: cloudmeet-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cloudmeet}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cloudmeet_secure_pass_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-cloudmeet_db}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - internal-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cloudmeet} -d ${POSTGRES_DB:-cloudmeet_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  # Private network for internal communication between backend and database
+  internal-net:
+    name: cloudmeet-internal-net
+    driver: bridge
+  # External network connected to your EXISTING Traefik container
+  traefik-net:
+    external: true
+    name: ${TRAEFIK_NETWORK:-traefik-net}
+
+volumes:
+  postgres-data:
+    name: cloudmeet-postgres-data
