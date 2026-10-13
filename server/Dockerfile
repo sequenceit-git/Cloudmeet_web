@@ -12,7 +12,7 @@ COPY package*.json ./
 COPY prisma ./prisma/
 
 # Install all dependencies (including devDependencies needed to build)
-RUN npm ci
+RUN npm install
 
 # Copy source code and configuration
 COPY tsconfig.json ./
@@ -35,7 +35,7 @@ ENV PORT=5000
 # Install production dependencies only
 COPY package*.json ./
 COPY prisma ./prisma/
-RUN npm ci --only=production && npx prisma generate
+RUN npm install --omit=dev && npx prisma generate
 
 # Copy compiled code from builder
 COPY --from=builder /app/dist ./dist

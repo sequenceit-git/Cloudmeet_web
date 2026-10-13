@@ -17,7 +17,7 @@ ENV VITE_TRTC_SDK_APP_ID=$VITE_TRTC_SDK_APP_ID
 ENV VITE_APP_TITLE=$VITE_APP_TITLE
 
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
 COPY . ./
 
