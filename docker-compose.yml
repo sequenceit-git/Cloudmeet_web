@@ -25,6 +25,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    command: sh -c "npx prisma db push --skip-generate ; node dist/index.js"
     networks:
       - internal-net
       - traefik-net
@@ -38,6 +39,7 @@ services:
       - "traefik.http.routers.cloudmeet-api.tls=true"
       - "traefik.http.routers.cloudmeet-api.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-letsencrypt}"
       - "traefik.http.routers.cloudmeet-api.priority=20"
+      - "traefik.http.routers.cloudmeet-api.service=cloudmeet-api"
       - "traefik.http.services.cloudmeet-api.loadbalancer.server.port=5000"
 
   # ----------------------------------------------------------------------------
@@ -68,6 +70,7 @@ services:
       - "traefik.http.routers.cloudmeet-web.tls=true"
       - "traefik.http.routers.cloudmeet-web.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-letsencrypt}"
       - "traefik.http.routers.cloudmeet-web.priority=10"
+      - "traefik.http.routers.cloudmeet-web.service=cloudmeet-web"
       - "traefik.http.services.cloudmeet-web.loadbalancer.server.port=80"
 
   # ----------------------------------------------------------------------------
