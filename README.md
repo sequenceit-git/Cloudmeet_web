@@ -141,8 +141,8 @@ cd cloudmeet_web
 cp .env.production.example .env
 nano .env
 
-# 2. Ensure the Traefik external network exists (default: traefik-net, or your existing network name)
-docker network create traefik-net 2>/dev/null || true
+# 2. Ensure the Traefik external network exists (default: traefik-public)
+docker network inspect traefik-public 2>/dev/null || docker network create traefik-public
 
 # 3. Build and launch containers in the background
 docker compose up -d --build
@@ -199,7 +199,7 @@ All inbound HTTPS traffic to `cloudmeet.sequenceit.software` is routed by your e
 | Variable | Default / Example | Purpose |
 | :--- | :--- | :--- |
 | `DOMAIN` | `cloudmeet.sequenceit.software` | Target production domain name |
-| `TRAEFIK_NETWORK` | `traefik-net` | Docker network of your running Traefik container |
+| `TRAEFIK_NETWORK` | `traefik-public` | Docker network of your running Traefik container |
 | `TRAEFIK_ENTRYPOINT` | `websecure` | Traefik HTTPS entrypoint name |
 | `TRAEFIK_CERT_RESOLVER`| `letsencrypt` | Traefik ACME certificate resolver name |
 | `PORT` | `5000` | Node.js backend port |

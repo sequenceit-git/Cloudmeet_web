@@ -31,7 +31,7 @@ services:
     labels:
       - "traefik.enable=true"
       # Expose through your existing Traefik instance
-      - "traefik.docker.network=${TRAEFIK_NETWORK:-traefik-net}"
+      - "traefik.docker.network=${TRAEFIK_NETWORK:-traefik-public}"
       # Route all /api and /health requests to Backend API (Priority 20)
       - "traefik.http.routers.cloudmeet-api.rule=Host(`${DOMAIN:-cloudmeet.sequenceit.software}`) && (PathPrefix(`/api`) || PathPrefix(`/health`))"
       - "traefik.http.routers.cloudmeet-api.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
@@ -61,7 +61,7 @@ services:
     labels:
       - "traefik.enable=true"
       # Expose through your existing Traefik instance
-      - "traefik.docker.network=${TRAEFIK_NETWORK:-traefik-net}"
+      - "traefik.docker.network=${TRAEFIK_NETWORK:-traefik-public}"
       # Route all frontend web traffic to Admin Nginx (Priority 10)
       - "traefik.http.routers.cloudmeet-web.rule=Host(`${DOMAIN:-cloudmeet.sequenceit.software}`)"
       - "traefik.http.routers.cloudmeet-web.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
@@ -99,7 +99,7 @@ networks:
   # External network connected to your EXISTING Traefik container
   traefik-net:
     external: true
-    name: ${TRAEFIK_NETWORK:-traefik-net}
+    name: ${TRAEFIK_NETWORK:-traefik-public}
 
 volumes:
   postgres-data:
