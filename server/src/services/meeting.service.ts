@@ -1,6 +1,6 @@
 import { prisma } from '../database/prisma';
 import { inMemoryStore, MemoryMeeting } from '../database/store';
-import { trtcService } from './trtc.service';
+import { toCallUserId, trtcService } from './trtc.service';
 
 export class MeetingService {
   /**
@@ -61,8 +61,9 @@ export class MeetingService {
           ...trtcCreds,
           roomId: trtcRoomId,
           strRoomId: trtcRoomId.toString(),
-          userId: hostId,
           isHost: true,
+          hostUserId: trtcCreds.userId,
+          displayName: host.displayName,
         },
       };
     } catch (e: any) {
@@ -103,8 +104,9 @@ export class MeetingService {
           ...trtcCreds,
           roomId: trtcRoomId,
           strRoomId: trtcRoomId.toString(),
-          userId: hostId,
           isHost: true,
+          hostUserId: trtcCreds.userId,
+          displayName: hostName,
         },
       };
     }
@@ -141,7 +143,7 @@ export class MeetingService {
             meetingCode: meeting.meetingCode,
             title: meeting.title,
             hostName: meeting.host.displayName,
-            hostUserId: meeting.hostId,
+            hostUserId: toCallUserId(meeting.hostId),
             status: meeting.status,
           },
         };
@@ -168,7 +170,7 @@ export class MeetingService {
           meetingCode: mem.meetingCode,
           title: mem.title,
           hostName: mem.hostName,
-          hostUserId: mem.hostId,
+          hostUserId: toCallUserId(mem.hostId),
           status: mem.status,
         },
       };
@@ -186,7 +188,9 @@ export class MeetingService {
       throw new Error(validation.reason || 'Invalid meeting');
     }
 
-    const userId = guestUserId || `guest_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const userId = toCallUserId(
+      guestUserId || `guest_${Date.now()}_${Math.floor(Math.random() * 1000)}`
+    );
 
     try {
       await prisma.participant.create({
@@ -212,7 +216,6 @@ export class MeetingService {
         ...trtcCreds,
         roomId: trtcRoomId,
         strRoomId: trtcRoomId.toString(),
-        userId,
         displayName: guestDisplayName,
         isHost: false,
         hostUserId: validation.meeting.hostUserId,
