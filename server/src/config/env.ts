@@ -9,7 +9,7 @@ export const ENV = {
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
   
   // Tencent TRTC Configuration
-  TRTC_SDK_APP_ID: parseInt(process.env.TRTC_SDK_APP_ID || '1400000000', 10),
-  TRTC_SECRET_KEY: process.env.TRTC_SECRET_KEY || 'your_tencent_trtc_secret_key_here',
+  TRTC_SDK_APP_ID: parseInt(process.env.TRTC_SDK_APP_ID || '20049417', 10),
+  TRTC_SECRET_KEY: process.env.TRTC_SECRET_KEY || '0379186cd7963687b317bcdd4e8ac72da8db4ab50303dadf9acc8276920b9c8b',
   TRTC_EXPIRE_TIME: parseInt(process.env.TRTC_EXPIRE_TIME || '86400', 10), // 24 hours in seconds
 };
