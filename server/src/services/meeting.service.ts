@@ -141,6 +141,7 @@ export class MeetingService {
             meetingCode: meeting.meetingCode,
             title: meeting.title,
             hostName: meeting.host.displayName,
+            hostUserId: meeting.hostId,
             status: meeting.status,
           },
         };
@@ -167,6 +168,7 @@ export class MeetingService {
           meetingCode: mem.meetingCode,
           title: mem.title,
           hostName: mem.hostName,
+          hostUserId: mem.hostId,
           status: mem.status,
         },
       };
@@ -213,6 +215,7 @@ export class MeetingService {
         userId,
         displayName: guestDisplayName,
         isHost: false,
+        hostUserId: validation.meeting.hostUserId,
       },
     };
   }
