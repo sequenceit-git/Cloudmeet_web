@@ -533,7 +533,7 @@ export function App() {
 
             {/* Refresh Live Data */}
             <button
-              onClick={fetchAllData}
+              onClick={() => fetchAllData()}
               disabled={loadingData}
               title={lang === 'zh' ? '刷新实时数据' : 'Refresh live data'}
               className="btn btn-secondary btn-icon"
@@ -629,7 +629,7 @@ export function App() {
               <span>{dataError}</span>
             </div>
             <button
-              onClick={fetchAllData}
+              onClick={() => fetchAllData()}
               className="btn btn-secondary"
               style={{ padding: '4px 10px', fontSize: '0.75rem' }}
             >
