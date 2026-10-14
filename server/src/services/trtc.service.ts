@@ -4,7 +4,7 @@ import { ENV } from '../config/env';
 const TLSSigAPIv2 = require('tls-sig-api-v2');
 
 /**
- * TUICallKit user IDs may contain letters, numbers, and underscores, and must
+ * Conference room user IDs may contain letters, numbers, and underscores, and must
  * be at most 32 characters. A database UUID is 36 characters with hyphens.
  * Removing hyphens yields a stable 32-character id.
  */
