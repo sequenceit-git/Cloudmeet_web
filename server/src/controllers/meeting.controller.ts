@@ -47,15 +47,26 @@ export class MeetingController {
     }
   }
 
+  async getMeetingParticipants(req: Request, res: Response) {
+    try {
+      const { code } = req.params;
+      const participants = await meetingService.getMeetingParticipants(code);
+      res.json({ participants });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  }
+
   async endMeeting(req: AuthenticatedRequest, res: Response) {
     try {
-      const hostId = req.user?.id;
+      const userId = req.user?.id;
+      const isAdmin = req.user?.role === 'ADMIN' || req.user?.role === 'SUPER_ADMIN';
       const { id } = req.params;
-      if (!hostId) {
-        res.status(401).json({ error: 'Unauthorized host' });
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized user' });
         return;
       }
-      const result = await meetingService.endMeeting(id, hostId);
+      const result = await meetingService.endMeeting(id, userId, isAdmin);
       res.json({ message: 'Meeting ended successfully', meeting: result });
     } catch (err: any) {
       res.status(400).json({ error: err.message });

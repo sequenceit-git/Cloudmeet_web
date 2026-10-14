@@ -67,6 +67,16 @@ export class AdminController {
       res.status(500).json({ error: err.message });
     }
   }
+
+  async endMeeting(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const meeting = await adminService.endMeeting(id);
+      res.json({ message: 'Meeting terminated successfully by administrator', meeting });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  }
 }
 
 export const adminController = new AdminController();

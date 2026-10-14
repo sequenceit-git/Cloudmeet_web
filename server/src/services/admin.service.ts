@@ -224,6 +224,28 @@ export class AdminService {
       };
     }
   }
+
+  async endMeeting(meetingId: string) {
+    try {
+      const meeting = await prisma.meeting.findUnique({ where: { id: meetingId } });
+      if (!meeting) {
+        throw new Error('Meeting not found');
+      }
+      return await prisma.meeting.update({
+        where: { id: meetingId },
+        data: { status: 'ENDED', endedAt: new Date() },
+      });
+    } catch (e: any) {
+      if (e.message === 'Meeting not found') throw e;
+
+      // Memory fallback
+      const mem = inMemoryStore.meetings.find((m) => m.id === meetingId);
+      if (!mem) throw new Error('Meeting not found');
+      mem.status = 'ENDED';
+      mem.endedAt = new Date();
+      return mem;
+    }
+  }
 }
 
 export const adminService = new AdminService();

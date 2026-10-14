@@ -30,6 +30,7 @@ import {
   AlertCircle,
   Clock,
   Calendar,
+  PowerOff,
 } from 'lucide-react';
 
 export function App() {
@@ -212,6 +213,26 @@ export function App() {
       setModalError(msg);
     } finally {
       setIsCreatingHost(false);
+    }
+  };
+
+  // Handle Forcibly Terminate Active Meeting
+  const handleTerminateMeeting = async (meetingId: string) => {
+    if (!window.confirm(t.terminateConfirm)) return;
+
+    try {
+      await adminApi.endMeeting(meetingId);
+      setMeetings((prev) =>
+        prev.map((m) => (m.id === meetingId ? { ...m, status: 'ENDED', endedAt: new Date().toISOString() } : m))
+      );
+      setDashboardMetrics((prev) => ({
+        ...prev,
+        activeMeetingsCount: Math.max(0, prev.activeMeetingsCount - 1),
+      }));
+      alert(t.terminateSuccess);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to terminate meeting';
+      alert(msg);
     }
   };
 
@@ -1037,6 +1058,7 @@ export function App() {
                         <th>{t.colAttendees}</th>
                         <th>{t.colStatus}</th>
                         <th>{t.colElapsed}</th>
+                        <th style={{ textAlign: 'right' }}>{t.colActions}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1079,6 +1101,27 @@ export function App() {
                               <Clock size={12} />
                               {m.createdAt ? new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
                             </div>
+                          </td>
+                          <td style={{ textAlign: 'right' }}>
+                            {m.status === 'ACTIVE' ? (
+                              <button
+                                onClick={() => handleTerminateMeeting(m.id)}
+                                className="btn btn-danger"
+                                style={{
+                                  padding: '5px 10px',
+                                  fontSize: '0.75rem',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 5,
+                                }}
+                                title={t.terminateSession}
+                              >
+                                <PowerOff size={13} />
+                                <span>{t.terminateSession}</span>
+                              </button>
+                            ) : (
+                              <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>-</span>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -1140,6 +1183,28 @@ export function App() {
                         <Clock size={12} />
                         <span>{m.createdAt ? new Date(m.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : '-'}</span>
                       </div>
+
+                      {/* Mobile Terminate Button if Active */}
+                      {m.status === 'ACTIVE' && (
+                        <div style={{ marginTop: 8 }}>
+                          <button
+                            onClick={() => handleTerminateMeeting(m.id)}
+                            className="btn btn-danger"
+                            style={{
+                              width: '100%',
+                              padding: '8px 12px',
+                              fontSize: '0.8125rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 6,
+                            }}
+                          >
+                            <PowerOff size={14} />
+                            <span>{t.terminateSession}</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

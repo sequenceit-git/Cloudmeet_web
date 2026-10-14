@@ -148,6 +148,12 @@ export class AdminApiClient {
   async getMeetings(): Promise<{ meetings: RealMeeting[] }> {
     return this.request('/admin/meetings');
   }
+
+  async endMeeting(id: string): Promise<{ message: string; meeting: RealMeeting }> {
+    return this.request(`/admin/meetings/${id}/end`, {
+      method: 'POST',
+    });
+  }
 }
 
 export const adminApi = new AdminApiClient();

@@ -218,14 +218,86 @@ export class MeetingService {
   }
 
   /**
-   * Host ends meeting for all
+   * Get active participants in a meeting
    */
-  async endMeeting(meetingId: string, hostId: string) {
+  async getMeetingParticipants(code: string) {
+    const normalized = code.replace(/\s+/g, '').trim();
+    let meeting: any = null;
+
+    try {
+      meeting = await prisma.meeting.findUnique({
+        where: { meetingCode: normalized },
+        include: {
+          participants: {
+            where: { leftAt: null },
+            orderBy: { joinedAt: 'asc' },
+            select: {
+              id: true,
+              userId: true,
+              displayName: true,
+              role: true,
+              joinedAt: true,
+            },
+          },
+        },
+      });
+
+      if (!meeting && normalized.length === 9) {
+        const withDashes = `${normalized.slice(0, 3)}-${normalized.slice(3, 6)}-${normalized.slice(6, 9)}`;
+        meeting = await prisma.meeting.findUnique({
+          where: { meetingCode: withDashes },
+          include: {
+            participants: {
+              where: { leftAt: null },
+              orderBy: { joinedAt: 'asc' },
+              select: {
+                id: true,
+                userId: true,
+                displayName: true,
+                role: true,
+                joinedAt: true,
+              },
+            },
+          },
+        });
+      }
+
+      if (meeting) {
+        return meeting.participants;
+      }
+    } catch (e) {
+      // Memory fallback
+    }
+
+    const mem = inMemoryStore.meetings.find(
+      (m) =>
+        m.meetingCode === normalized ||
+        m.meetingCode.replace(/-/g, '') === normalized.replace(/-/g, '')
+    );
+    if (mem) {
+      return [
+        {
+          id: 'host_p',
+          userId: mem.hostId,
+          displayName: mem.hostName,
+          role: 'HOST',
+          joinedAt: mem.startedAt,
+        },
+      ];
+    }
+
+    return [];
+  }
+
+  /**
+   * Host or Admin ends meeting for all
+   */
+  async endMeeting(meetingId: string, userId: string, isAdmin = false) {
     try {
       const meeting = await prisma.meeting.findUnique({ where: { id: meetingId } });
       if (meeting) {
-        if (meeting.hostId !== hostId) {
-          throw new Error('Only the meeting host can end the meeting');
+        if (!isAdmin && meeting.hostId !== userId) {
+          throw new Error('Only the meeting host or administrator can end the meeting');
         }
         return await prisma.meeting.update({
           where: { id: meetingId },
@@ -239,8 +311,8 @@ export class MeetingService {
     // Memory fallback
     const mem = inMemoryStore.meetings.find((m) => m.id === meetingId);
     if (mem) {
-      if (mem.hostId !== hostId) {
-        throw new Error('Only the meeting host can end the meeting');
+      if (!isAdmin && mem.hostId !== userId) {
+        throw new Error('Only the meeting host or administrator can end the meeting');
       }
       mem.status = 'ENDED';
       mem.endedAt = new Date();
