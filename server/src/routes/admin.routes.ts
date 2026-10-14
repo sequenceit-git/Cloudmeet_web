@@ -19,5 +19,6 @@ router.delete('/hosts/:id', adminController.deleteHost);
 // Meetings oversight
 router.get('/meetings', adminController.getAllMeetings);
 router.post('/meetings/:id/end', adminController.endMeeting);
+router.delete('/meetings/:id', adminController.deleteMeeting);
 
 export default router;

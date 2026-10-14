@@ -202,10 +202,15 @@ export class AdminService {
     }
   }
 
-  async getAllMeetings() {
+  async getAllMeetings(page = 1, pageSize = 10) {
+    const safePage = Math.max(1, page);
+    const safeSize = Math.max(1, Math.min(pageSize, 50));
     try {
+      const total = await prisma.meeting.count();
       const meetings = await prisma.meeting.findMany({
         orderBy: { createdAt: 'desc' },
+        skip: (safePage - 1) * safeSize,
+        take: safeSize,
         include: {
           host: {
             select: { id: true, displayName: true, email: true },
@@ -215,10 +220,17 @@ export class AdminService {
           },
         },
       });
-      return { meetings };
+      return { meetings, total, page: safePage, pageSize: safeSize };
     } catch (e) {
+      const sorted = [...inMemoryStore.meetings].sort(
+        (a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime()
+      );
+      const start = (safePage - 1) * safeSize;
       return {
-        meetings: inMemoryStore.meetings.map((m) => ({
+        total: sorted.length,
+        page: safePage,
+        pageSize: safeSize,
+        meetings: sorted.slice(start, start + safeSize).map((m) => ({
           id: m.id,
           meetingCode: m.meetingCode,
           title: m.title,
@@ -256,6 +268,25 @@ export class AdminService {
       mem.status = 'ENDED';
       mem.endedAt = new Date();
       return mem;
+    }
+  }
+
+  async deleteMeeting(meetingId: string) {
+    try {
+      const meeting = await prisma.meeting.findUnique({ where: { id: meetingId } });
+      if (!meeting) {
+        throw new Error('Meeting not found');
+      }
+      await prisma.meeting.delete({ where: { id: meetingId } });
+      return { id: meetingId };
+    } catch (e: any) {
+      if (e.message === 'Meeting not found') throw e;
+      const before = inMemoryStore.meetings.length;
+      inMemoryStore.meetings = inMemoryStore.meetings.filter((m) => m.id !== meetingId);
+      if (inMemoryStore.meetings.length === before) {
+        throw new Error('Meeting not found');
+      }
+      return { id: meetingId };
     }
   }
 }

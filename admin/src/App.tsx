@@ -69,6 +69,8 @@ export function App() {
     sdkConfigured: false,
   });
   const [apiLatencyMs, setApiLatencyMs] = useState<number | null>(null);
+  const [meetingPage, setMeetingPage] = useState(1);
+  const [meetingTotal, setMeetingTotal] = useState(0);
 
   const [loadingData, setLoadingData] = useState(false);
   const [dataError, setDataError] = useState<string | null>(null);
@@ -108,7 +110,7 @@ export function App() {
           recentMeetings: [],
         })),
         adminApi.getHosts().catch(() => ({ hosts: [] })),
-        adminApi.getMeetings().catch(() => ({ meetings: [] })),
+        adminApi.getMeetings(meetingPage).catch(() => ({ meetings: [], total: 0 })),
       ]);
       setApiLatencyMs(Math.max(1, Math.round(performance.now() - started)));
 
@@ -123,13 +125,14 @@ export function App() {
 
       setHosts(hostsRes.hosts || []);
       setMeetings(meetingsRes.meetings || []);
+      setMeetingTotal(meetingsRes.total ?? (meetingsRes.meetings || []).length);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to connect to backend server';
       setDataError(msg);
     } finally {
       setLoadingData(false);
     }
-  }, []);
+  }, [meetingPage]);
 
   useEffect(() => {
     if (!adminUser) return;
@@ -251,6 +254,27 @@ export function App() {
       alert(msg);
     }
   };
+
+  const handleDeleteMeeting = async (meetingId: string) => {
+    if (!window.confirm(t.deleteMeetingConfirm)) return;
+
+    try {
+      await adminApi.deleteMeeting(meetingId);
+      const nextTotal = Math.max(0, meetingTotal - 1);
+      const nextPages = Math.max(1, Math.ceil(nextTotal / 10));
+      if (meetingPage > nextPages) {
+        setMeetingPage(nextPages);
+      } else {
+        fetchAllData(true);
+      }
+      alert(t.deleteMeetingSuccess);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to delete meeting';
+      alert(msg);
+    }
+  };
+
+  const meetingPageCount = Math.max(1, Math.ceil(meetingTotal / 10));
 
   const filteredHosts = hosts.filter(
     (h) =>
@@ -1119,10 +1143,27 @@ export function App() {
                             </div>
                           </td>
                           <td style={{ textAlign: 'right' }}>
-                            {m.status === 'ACTIVE' ? (
+                            <div style={{ display: 'inline-flex', gap: 6, justifyContent: 'flex-end' }}>
+                              {m.status === 'ACTIVE' && (
+                                <button
+                                  onClick={() => handleTerminateMeeting(m.id)}
+                                  className="btn btn-danger"
+                                  style={{
+                                    padding: '5px 10px',
+                                    fontSize: '0.75rem',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 5,
+                                  }}
+                                  title={t.terminateSession}
+                                >
+                                  <PowerOff size={13} />
+                                  <span>{t.terminateSession}</span>
+                                </button>
+                              )}
                               <button
-                                onClick={() => handleTerminateMeeting(m.id)}
-                                className="btn btn-danger"
+                                onClick={() => handleDeleteMeeting(m.id)}
+                                className="btn btn-secondary"
                                 style={{
                                   padding: '5px 10px',
                                   fontSize: '0.75rem',
@@ -1130,14 +1171,12 @@ export function App() {
                                   alignItems: 'center',
                                   gap: 5,
                                 }}
-                                title={t.terminateSession}
+                                title={t.deleteMeeting}
                               >
-                                <PowerOff size={13} />
-                                <span>{t.terminateSession}</span>
+                                <Trash2 size={13} />
+                                <span>{t.deleteMeeting}</span>
                               </button>
-                            ) : (
-                              <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>-</span>
-                            )}
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -1200,14 +1239,13 @@ export function App() {
                         <span>{m.createdAt ? new Date(m.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : '-'}</span>
                       </div>
 
-                      {/* Mobile Terminate Button if Active */}
-                      {m.status === 'ACTIVE' && (
-                        <div style={{ marginTop: 8 }}>
+                      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                        {m.status === 'ACTIVE' && (
                           <button
                             onClick={() => handleTerminateMeeting(m.id)}
                             className="btn btn-danger"
                             style={{
-                              width: '100%',
+                              flex: 1,
                               padding: '8px 12px',
                               fontSize: '0.8125rem',
                               display: 'flex',
@@ -1219,11 +1257,62 @@ export function App() {
                             <PowerOff size={14} />
                             <span>{t.terminateSession}</span>
                           </button>
-                        </div>
-                      )}
+                        )}
+                        <button
+                          onClick={() => handleDeleteMeeting(m.id)}
+                          className="btn btn-secondary"
+                          style={{
+                            flex: 1,
+                            padding: '8px 12px',
+                            fontSize: '0.8125rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 6,
+                          }}
+                        >
+                          <Trash2 size={14} />
+                          <span>{t.deleteMeeting}</span>
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
+
+                {meetingTotal > 10 && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                      padding: '14px 20px',
+                      borderTop: '1px solid var(--border-subtle)',
+                    }}
+                  >
+                    <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+                      {t.pageStatus(meetingPage, meetingPageCount, meetingTotal)}
+                    </span>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        className="btn btn-secondary"
+                        disabled={meetingPage <= 1}
+                        onClick={() => setMeetingPage((page) => Math.max(1, page - 1))}
+                        style={{ padding: '6px 12px', fontSize: '0.8125rem' }}
+                      >
+                        {t.pagePrev}
+                      </button>
+                      <button
+                        className="btn btn-secondary"
+                        disabled={meetingPage >= meetingPageCount}
+                        onClick={() => setMeetingPage((page) => page + 1)}
+                        style={{ padding: '6px 12px', fontSize: '0.8125rem' }}
+                      >
+                        {t.pageNext}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>

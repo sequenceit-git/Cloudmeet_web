@@ -148,8 +148,14 @@ export class AdminApiClient {
   }
 
   // Meetings Oversight
-  async getMeetings(): Promise<{ meetings: RealMeeting[] }> {
-    return this.request('/admin/meetings');
+  async getMeetings(page = 1): Promise<{ meetings: RealMeeting[]; total?: number; page?: number; pageSize?: number }> {
+    return this.request(`/admin/meetings?page=${page}`);
+  }
+
+  async deleteMeeting(id: string): Promise<{ message: string }> {
+    return this.request(`/admin/meetings/${id}`, {
+      method: 'DELETE',
+    });
   }
 
   async endMeeting(id: string): Promise<{ message: string; meeting: RealMeeting }> {

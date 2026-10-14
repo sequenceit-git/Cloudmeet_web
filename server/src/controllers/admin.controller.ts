@@ -61,7 +61,8 @@ export class AdminController {
 
   async getAllMeetings(req: Request, res: Response) {
     try {
-      const result = await adminService.getAllMeetings();
+      const page = parseInt(String(req.query.page || '1'), 10);
+      const result = await adminService.getAllMeetings(Number.isFinite(page) ? page : 1, 10);
       res.json(result);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
@@ -73,6 +74,16 @@ export class AdminController {
       const { id } = req.params;
       const meeting = await adminService.endMeeting(id);
       res.json({ message: 'Meeting terminated successfully by administrator', meeting });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  }
+
+  async deleteMeeting(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      await adminService.deleteMeeting(id);
+      res.json({ message: 'Meeting deleted successfully' });
     } catch (err: any) {
       res.status(400).json({ error: err.message });
     }
