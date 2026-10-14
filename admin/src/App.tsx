@@ -57,11 +57,18 @@ export function App() {
     activeMeetingsCount: number;
     totalMeetingsCount: number;
     totalHostsCount: number;
+    liveParticipants: number;
+    sdkAppId: number;
+    sdkConfigured: boolean;
   }>({
     activeMeetingsCount: 0,
     totalMeetingsCount: 0,
     totalHostsCount: 0,
+    liveParticipants: 0,
+    sdkAppId: 0,
+    sdkConfigured: false,
   });
+  const [apiLatencyMs, setApiLatencyMs] = useState<number | null>(null);
 
   const [loadingData, setLoadingData] = useState(false);
   const [dataError, setDataError] = useState<string | null>(null);
@@ -83,27 +90,35 @@ export function App() {
   }, []);
 
   // Fetch Live Real Data from API
-  const fetchAllData = useCallback(async () => {
+  const fetchAllData = useCallback(async (silent = false) => {
     if (!adminApi.getToken()) return;
-    setLoadingData(true);
+    if (!silent) setLoadingData(true);
     setDataError(null);
 
     try {
+      const started = performance.now();
       const [dashRes, hostsRes, meetingsRes] = await Promise.all([
         adminApi.getDashboard().catch(() => ({
           activeMeetingsCount: 0,
           totalMeetingsCount: 0,
           totalHostsCount: 0,
+          liveParticipants: 0,
+          sdkAppId: 0,
+          sdkConfigured: false,
           recentMeetings: [],
         })),
         adminApi.getHosts().catch(() => ({ hosts: [] })),
         adminApi.getMeetings().catch(() => ({ meetings: [] })),
       ]);
+      setApiLatencyMs(Math.max(1, Math.round(performance.now() - started)));
 
       setDashboardMetrics({
         activeMeetingsCount: dashRes.activeMeetingsCount || 0,
         totalMeetingsCount: dashRes.totalMeetingsCount || 0,
         totalHostsCount: dashRes.totalHostsCount || (hostsRes.hosts ? hostsRes.hosts.length : 0),
+        liveParticipants: dashRes.liveParticipants || 0,
+        sdkAppId: dashRes.sdkAppId || 0,
+        sdkConfigured: Boolean(dashRes.sdkConfigured),
       });
 
       setHosts(hostsRes.hosts || []);
@@ -117,9 +132,10 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    if (adminUser) {
-      fetchAllData();
-    }
+    if (!adminUser) return;
+    fetchAllData();
+    const timer = window.setInterval(() => fetchAllData(true), 10000);
+    return () => window.clearInterval(timer);
   }, [adminUser, fetchAllData]);
 
   // Handle Admin Login
@@ -716,8 +732,8 @@ export function App() {
                 <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', fontWeight: 500 }}>
                   {t.trtcStatus}
                 </p>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginTop: 8, color: '#34d399' }}>
-                  {t.operational}
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginTop: 8, color: dataError || !dashboardMetrics.sdkConfigured ? '#f87171' : '#34d399' }}>
+                  {dataError || !dashboardMetrics.sdkConfigured ? t.unavailable : t.operational}
                 </h3>
               </div>
               <div
@@ -745,7 +761,7 @@ export function App() {
                 color: 'var(--text-muted)',
               }}
             >
-              {t.avgLatency}: <strong style={{ color: '#ffffff' }}>~42ms</strong> · {t.zeroLoss}
+              {t.avgLatency}: <strong style={{ color: '#ffffff' }}>{apiLatencyMs == null ? '—' : `${apiLatencyMs}ms`}</strong> · {dashboardMetrics.liveParticipants} {t.zeroLoss}
             </div>
           </div>
         </div>
@@ -1362,7 +1378,7 @@ export function App() {
                   <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
                     {t.globalAvailability}
                   </span>
-                  <strong style={{ color: '#34d399' }}>99.99%</strong>
+                  <strong style={{ color: '#34d399' }}>{dashboardMetrics.activeMeetingsCount}</strong>
                 </div>
                 <div
                   style={{
@@ -1375,7 +1391,7 @@ export function App() {
                   <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
                     {t.audioProcessing}
                   </span>
-                  <strong style={{ color: '#34d399' }}>Active</strong>
+                  <strong style={{ color: '#34d399' }}>{dashboardMetrics.liveParticipants > 0 ? t.audioActive : t.audioIdle}</strong>
                 </div>
                 <div
                   style={{
@@ -1388,7 +1404,7 @@ export function App() {
                   <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
                     {t.videoCodec}
                   </span>
-                  <strong style={{ color: 'var(--accent-cyan)' }}>H.264 / VP8</strong>
+                  <strong style={{ color: 'var(--accent-cyan)' }}>{dashboardMetrics.sdkAppId || '—'}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0' }}>
                   <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>

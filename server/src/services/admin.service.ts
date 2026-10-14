@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { prisma } from '../database/prisma';
+import { ENV } from '../config/env';
 import { inMemoryStore, MemoryHost } from '../database/store';
 
 export class AdminService {
@@ -141,6 +142,9 @@ export class AdminService {
       const active = await prisma.meeting.count({ where: { status: 'ACTIVE' } });
       const total = await prisma.meeting.count();
       const hostsCount = await prisma.host.count();
+      const liveParticipants = await prisma.participant.count({
+        where: { leftAt: null, meeting: { status: 'ACTIVE' } },
+      });
 
       const recentMeetings = await prisma.meeting.findMany({
         take: 10,
@@ -159,18 +163,26 @@ export class AdminService {
         activeMeetingsCount: active,
         totalMeetingsCount: total,
         totalHostsCount: hostsCount,
+        liveParticipants,
+        sdkAppId: ENV.TRTC_SDK_APP_ID,
+        sdkConfigured: ENV.TRTC_SDK_APP_ID > 0 && ENV.TRTC_SECRET_KEY.length > 16,
         recentMeetings,
       };
     } catch (e) {
       // Memory fallback
-      const active = inMemoryStore.meetings.filter((m) => m.status === 'ACTIVE').length;
+      const activeMeetings = inMemoryStore.meetings.filter((m) => m.status === 'ACTIVE');
+      const active = activeMeetings.length;
       const total = inMemoryStore.meetings.length;
       const hostsCount = inMemoryStore.hosts.length;
+      const liveParticipants = activeMeetings.reduce((sum, m) => sum + m.participantsCount, 0);
 
       return {
         activeMeetingsCount: active,
         totalMeetingsCount: total,
         totalHostsCount: hostsCount,
+        liveParticipants,
+        sdkAppId: ENV.TRTC_SDK_APP_ID,
+        sdkConfigured: ENV.TRTC_SDK_APP_ID > 0 && ENV.TRTC_SECRET_KEY.length > 16,
         recentMeetings: inMemoryStore.meetings.slice(0, 10).map((m) => ({
           id: m.id,
           meetingCode: m.meetingCode,

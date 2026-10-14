@@ -114,6 +114,9 @@ export class AdminApiClient {
     activeMeetingsCount: number;
     totalMeetingsCount: number;
     totalHostsCount: number;
+    liveParticipants?: number;
+    sdkAppId?: number;
+    sdkConfigured?: boolean;
     recentMeetings: RealMeeting[];
   }> {
     return this.request('/admin/dashboard');
