@@ -57,6 +57,21 @@ export class MeetingController {
     }
   }
 
+  async leaveMeeting(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const userId = String(req.body?.userId || '').trim();
+      if (!id || !userId) {
+        res.status(400).json({ error: 'Meeting id and user id are required' });
+        return;
+      }
+      await meetingService.markParticipantLeft(id, userId);
+      res.json({ message: 'Left meeting' });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  }
+
   async endMeeting(req: AuthenticatedRequest, res: Response) {
     try {
       const userId = req.user?.id;

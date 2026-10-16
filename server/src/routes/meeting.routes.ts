@@ -16,6 +16,9 @@ router.get('/:code/participants', meetingController.getMeetingParticipants);
 // Guest joins meeting without registration
 router.post('/:code/join', meetingController.joinMeetingAsGuest);
 
+// A person left the room. The meeting stays open until it has been empty for 5 minutes.
+router.post('/:id/leave', meetingController.leaveMeeting);
+
 // Host or Admin ends meeting for all
 router.post('/:id/end', authenticateToken, meetingController.endMeeting);
 

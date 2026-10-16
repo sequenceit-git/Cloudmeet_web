@@ -4,6 +4,7 @@ import { ENV } from './config/env';
 import routes from './routes';
 import { errorHandler } from './middleware/error.middleware';
 import { adminService } from './services/admin.service';
+import { meetingService } from './services/meeting.service';
 
 const app = express();
 
@@ -133,9 +134,19 @@ function scheduleHostCleanup() {
   });
 }
 
+const EMPTY_ROOM_CHECK_MS = 60 * 1000;
+
+function scheduleEmptyRoomCleanup() {
+  meetingService.endEmptyMeetings().catch((err) => {
+    console.error('[MeetingCleanup] Failed to end empty meetings:', err);
+  });
+}
+
 app.listen(ENV.PORT, () => {
   scheduleHostCleanup();
+  scheduleEmptyRoomCleanup();
   setInterval(scheduleHostCleanup, HOST_CLEANUP_INTERVAL_MS);
+  setInterval(scheduleEmptyRoomCleanup, EMPTY_ROOM_CHECK_MS);
   console.log(`===============================================`);
   console.log(`🚀 CloudNews Backend API running on port ${ENV.PORT}`);
   console.log(`📡 Environment: ${ENV.NODE_ENV}`);

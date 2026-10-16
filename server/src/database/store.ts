@@ -25,6 +25,7 @@ export interface MemoryMeeting {
   startedAt: Date;
   endedAt?: Date;
   participantsCount: number;
+  emptySince?: Date;
 }
 
 export const inMemoryStore = {

@@ -204,7 +204,10 @@ export class MeetingService {
     } catch (e) {
       // Update memory count if present
       const mem = inMemoryStore.meetings.find((m) => m.id === validation.meeting!.id);
-      if (mem) mem.participantsCount += 1;
+      if (mem) {
+        mem.participantsCount += 1;
+        mem.emptySince = undefined;
+      }
     }
 
     const trtcCreds = trtcService.generateUserSig(userId);
@@ -293,6 +296,90 @@ export class MeetingService {
     }
 
     return [];
+  }
+
+  /**
+   * Marks one person as having left. Guests send their room user id.
+   */
+  async markParticipantLeft(meetingId: string, userId: string) {
+    const now = new Date();
+    const normalized = userId.trim();
+    if (!meetingId || !normalized) return;
+
+    try {
+      await prisma.participant.updateMany({
+        where: { meetingId, userId: normalized, leftAt: null },
+        data: { leftAt: now },
+      });
+
+      const meeting = await prisma.meeting.findUnique({
+        where: { id: meetingId },
+        select: { hostId: true },
+      });
+      if (meeting && toCallUserId(meeting.hostId) === normalized) {
+        await prisma.participant.updateMany({
+          where: { meetingId, userId: meeting.hostId, leftAt: null },
+          data: { leftAt: now },
+        });
+      }
+      return;
+    } catch (e) {
+      const mem = inMemoryStore.meetings.find((m) => m.id === meetingId);
+      if (!mem || mem.status === 'ENDED') return;
+      mem.participantsCount = Math.max(0, mem.participantsCount - 1);
+      if (mem.participantsCount === 0) {
+        mem.emptySince = now;
+      }
+    }
+  }
+
+  /**
+   * Ends active meetings that have had nobody inside for 5 minutes.
+   */
+  async endEmptyMeetings() {
+    const cutoff = new Date(Date.now() - 5 * 60 * 1000);
+    let ended = 0;
+
+    try {
+      const meetings = await prisma.meeting.findMany({
+        where: { status: 'ACTIVE' },
+        include: { participants: { select: { leftAt: true } } },
+      });
+
+      for (const meeting of meetings) {
+        const stillInside = meeting.participants.some((person) => person.leftAt == null);
+        if (stillInside) continue;
+
+        const lastLeft = meeting.participants.reduce<Date | null>((latest, person) => {
+          if (!person.leftAt) return latest;
+          if (!latest || person.leftAt > latest) return person.leftAt;
+          return latest;
+        }, null);
+        const emptySince = lastLeft ?? meeting.startedAt;
+        if (emptySince > cutoff) continue;
+
+        await prisma.meeting.update({
+          where: { id: meeting.id },
+          data: { status: 'ENDED', endedAt: new Date() },
+        });
+        ended += 1;
+      }
+    } catch (e) {
+      const now = new Date();
+      for (const meeting of inMemoryStore.meetings) {
+        if (meeting.status !== 'ACTIVE') continue;
+        if (meeting.participantsCount > 0 || !meeting.emptySince) continue;
+        if (meeting.emptySince > cutoff) continue;
+        meeting.status = 'ENDED';
+        meeting.endedAt = now;
+        ended += 1;
+      }
+    }
+
+    if (ended > 0) {
+      console.log(`[MeetingService] Ended ${ended} empty meeting(s) after 5 minutes.`);
+    }
+    return ended;
   }
 
   /**
