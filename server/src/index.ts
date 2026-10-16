@@ -3,6 +3,7 @@ import cors from 'cors';
 import { ENV } from './config/env';
 import routes from './routes';
 import { errorHandler } from './middleware/error.middleware';
+import { adminService } from './services/admin.service';
 
 const app = express();
 
@@ -124,7 +125,17 @@ app.use('/api/v1', routes);
 // Global Error Handler
 app.use(errorHandler);
 
+const HOST_CLEANUP_INTERVAL_MS = 12 * 60 * 60 * 1000;
+
+function scheduleHostCleanup() {
+  adminService.deleteExpiredHosts().catch((err) => {
+    console.error('[HostCleanup] Failed to delete expired hosts:', err);
+  });
+}
+
 app.listen(ENV.PORT, () => {
+  scheduleHostCleanup();
+  setInterval(scheduleHostCleanup, HOST_CLEANUP_INTERVAL_MS);
   console.log(`===============================================`);
   console.log(`🚀 CloudNews Backend API running on port ${ENV.PORT}`);
   console.log(`📡 Environment: ${ENV.NODE_ENV}`);

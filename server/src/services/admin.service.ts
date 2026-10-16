@@ -125,6 +125,32 @@ export class AdminService {
     }
   }
 
+  async deleteExpiredHosts() {
+    const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+    try {
+      const expired = await prisma.host.findMany({
+        where: { createdAt: { lt: cutoff } },
+        select: { id: true, username: true },
+      });
+      if (expired.length === 0) return 0;
+
+      await prisma.host.deleteMany({
+        where: { id: { in: expired.map((host) => host.id) } },
+      });
+      console.log(`[AdminService] Deleted ${expired.length} host account(s) older than 30 days.`);
+      return expired.length;
+    } catch (e) {
+      const before = inMemoryStore.hosts.length;
+      const removedIds = new Set(
+        inMemoryStore.hosts.filter((host) => host.createdAt < cutoff).map((host) => host.id)
+      );
+      inMemoryStore.hosts = inMemoryStore.hosts.filter((host) => !removedIds.has(host.id));
+      inMemoryStore.meetings = inMemoryStore.meetings.filter((meeting) => !removedIds.has(meeting.hostId));
+      return before - inMemoryStore.hosts.length;
+    }
+  }
+
   async deleteHost(hostId: string) {
     try {
       return await prisma.host.delete({
