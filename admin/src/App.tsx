@@ -276,6 +276,12 @@ export function App() {
 
   const meetingPageCount = Math.max(1, Math.ceil(meetingTotal / 10));
 
+  const hostDaysLeft = (createdAt?: string) => {
+    if (!createdAt) return null;
+    const expiresAt = new Date(createdAt).getTime() + 30 * 24 * 60 * 60 * 1000;
+    return Math.max(0, Math.ceil((expiresAt - Date.now()) / (24 * 60 * 60 * 1000)));
+  };
+
   const filteredHosts = hosts.filter(
     (h) =>
       h.displayName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -926,7 +932,7 @@ export function App() {
                             )}
                           </td>
                           <td style={{ color: 'var(--text-dim)', fontSize: '0.8125rem' }}>
-                            {host.createdAt ? new Date(host.createdAt).toLocaleDateString() : '-'}
+                            {hostDaysLeft(host.createdAt) == null ? '-' : t.daysLeft(hostDaysLeft(host.createdAt) as number)}
                           </td>
                           <td style={{ textAlign: 'right' }}>
                             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
@@ -1012,7 +1018,7 @@ export function App() {
                         </span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                           <Calendar size={12} />
-                          <span>{host.createdAt ? new Date(host.createdAt).toLocaleDateString() : '-'}</span>
+                          <span>{hostDaysLeft(host.createdAt) == null ? '-' : t.daysLeft(hostDaysLeft(host.createdAt) as number)}</span>
                         </div>
                       </div>
 
