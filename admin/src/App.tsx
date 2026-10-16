@@ -77,7 +77,7 @@ export function App() {
 
   // New Host Form State
   const [newHostName, setNewHostName] = useState('');
-  const [newHostEmail, setNewHostEmail] = useState('');
+  const [newHostUsername, setNewHostUsername] = useState('');
   const [newHostPassword, setNewHostPassword] = useState('');
   const [isCreatingHost, setIsCreatingHost] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
@@ -184,8 +184,8 @@ export function App() {
   const handleDeleteHost = async (host: RealHost) => {
     const confirmPrompt =
       lang === 'zh'
-        ? `确定要删除主持人账号 "${host.displayName}" (${host.email}) 吗？`
-        : `Are you sure you want to delete host "${host.displayName}" (${host.email})?`;
+        ? `确定要删除主持人账号 "${host.displayName}" (${host.username}) 吗？`
+        : `Are you sure you want to delete host "${host.displayName}" (${host.username})?`;
 
     if (!window.confirm(confirmPrompt)) return;
 
@@ -205,7 +205,7 @@ export function App() {
   // Handle Create Real Host
   const handleCreateHost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newHostName.trim() || !newHostEmail.trim() || !newHostPassword) return;
+    if (!newHostName.trim() || !newHostUsername.trim() || !newHostPassword) return;
 
     setModalError(null);
     setIsCreatingHost(true);
@@ -213,7 +213,7 @@ export function App() {
     try {
       const res = await adminApi.createHost({
         displayName: newHostName.trim(),
-        email: newHostEmail.trim().toLowerCase(),
+        username: newHostUsername.trim().toLowerCase(),
         password: newHostPassword,
       });
 
@@ -224,7 +224,7 @@ export function App() {
       }));
 
       setNewHostName('');
-      setNewHostEmail('');
+      setNewHostUsername('');
       setNewHostPassword('');
       setShowAddHostModal(false);
     } catch (err: unknown) {
@@ -279,7 +279,7 @@ export function App() {
   const filteredHosts = hosts.filter(
     (h) =>
       h.displayName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      h.email?.toLowerCase().includes(searchQuery.toLowerCase())
+      h.username?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // ==========================================
@@ -331,21 +331,19 @@ export function App() {
         >
           {/* Logo & Title */}
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <div
+            <img
+              src="/logo.png"
+              alt="CloudNews"
               style={{
-                width: 52,
-                height: 52,
+                width: 72,
+                height: 72,
                 margin: '0 auto 16px',
-                borderRadius: 14,
-                background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 0 25px rgba(99, 102, 241, 0.45)',
+                borderRadius: 18,
+                display: 'block',
+                objectFit: 'cover',
+                boxShadow: '0 0 25px rgba(10, 61, 120, 0.45)',
               }}
-            >
-              <Video size={28} color="#ffffff" />
-            </div>
+            />
             <h1
               style={{
                 fontSize: '1.5rem',
@@ -491,7 +489,7 @@ export function App() {
 
         {/* Footer info */}
         <div style={{ marginTop: 24, fontSize: '0.75rem', color: 'var(--text-dim)', textAlign: 'center' }}>
-          CloudMeet Enterprise · Tencent TRTC Inside · SDKAppID: {ENV.TRTC_SDK_APP_ID}
+          CloudNews Enterprise · Tencent TRTC Inside · SDKAppID: {ENV.TRTC_SDK_APP_ID}
         </div>
       </div>
     );
@@ -507,9 +505,7 @@ export function App() {
         <div className="app-header-inner">
           {/* 1. Brand Section */}
           <div className="header-brand">
-            <div className="brand-logo">
-              <Video size={20} color="#ffffff" />
-            </div>
+            <img className="brand-logo" src="/logo.png" alt="CloudNews" />
             <div className="brand-info">
               <div className="brand-title-row">
                 <span className="brand-title">{t.portalTitle}</span>
@@ -880,7 +876,7 @@ export function App() {
                     <thead>
                       <tr>
                         <th>{t.colHost}</th>
-                        <th>{t.colEmail}</th>
+                        <th>{t.colUsername}</th>
                         <th>{t.colTotalMeetings}</th>
                         <th>{t.colStatus}</th>
                         <th>{t.colCreated}</th>
@@ -912,7 +908,7 @@ export function App() {
                               <span style={{ fontWeight: 600 }}>{host.displayName}</span>
                             </div>
                           </td>
-                          <td style={{ color: 'var(--text-muted)' }}>{host.email}</td>
+                          <td style={{ color: 'var(--text-muted)' }}>{host.username}</td>
                           <td>
                             <span className="badge" style={{ background: 'rgba(255, 255, 255, 0.05)', color: '#ffffff' }}>
                               {host._count?.meetings ?? 0} {t.sessions}
@@ -983,7 +979,7 @@ export function App() {
                           </div>
                           <div>
                             <div style={{ fontWeight: 600, fontSize: '0.9375rem' }}>{host.displayName}</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{host.email}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{host.username}</div>
                           </div>
                         </div>
 
@@ -1112,7 +1108,7 @@ export function App() {
                             <div>
                               <div>{m.host?.displayName || '-'}</div>
                               <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-                                {m.host?.email || '-'}
+                                {m.host?.username || m.host?.email || '-'}
                               </div>
                             </div>
                           </td>
@@ -1224,7 +1220,7 @@ export function App() {
                       >
                         <div>
                           <div style={{ color: 'var(--text-muted)' }}>{m.host?.displayName || '-'}</div>
-                          <div style={{ fontSize: '0.6875rem', color: 'var(--text-dim)' }}>{m.host?.email || '-'}</div>
+                          <div style={{ fontSize: '0.6875rem', color: 'var(--text-dim)' }}>{m.host?.username || m.host?.email || '-'}</div>
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--accent-cyan)' }}>
@@ -1613,14 +1609,14 @@ export function App() {
                     marginBottom: 6,
                   }}
                 >
-                  {t.emailLabel}
+                  {t.usernameLabel}
                 </label>
                 <input
-                  type="email"
+                  type="text"
                   required
-                  placeholder="zhang.san@company.cn"
-                  value={newHostEmail}
-                  onChange={(e) => setNewHostEmail(e.target.value)}
+                  placeholder={t.usernamePlaceholder}
+                  value={newHostUsername}
+                  onChange={(e) => setNewHostUsername(e.target.value)}
                   className="input-field"
                 />
               </div>

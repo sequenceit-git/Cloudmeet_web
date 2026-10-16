@@ -1,7 +1,7 @@
 {
   "name": "cloudmeet-server",
   "version": "1.0.0",
-  "description": "CloudMeet Backend API - Authentication, Meeting Management, and TRTC Credential Issuance",
+  "description": "CloudNews Backend API - Authentication, Meeting Management, and TRTC Credential Issuance",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",

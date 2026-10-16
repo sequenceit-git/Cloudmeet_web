@@ -9,7 +9,7 @@ export class AdminService {
       return await prisma.host.findMany({
         select: {
           id: true,
-          email: true,
+          username: true,
           displayName: true,
           avatarUrl: true,
           isDisabled: true,
@@ -24,7 +24,7 @@ export class AdminService {
       // Memory fallback
       return inMemoryStore.hosts.map((h) => ({
         id: h.id,
-        email: h.email,
+        username: h.username,
         displayName: h.displayName,
         avatarUrl: h.avatarUrl,
         isDisabled: h.isDisabled,
@@ -36,25 +36,26 @@ export class AdminService {
     }
   }
 
-  async createHost(data: { email: string; password: string; displayName: string }) {
+  async createHost(data: { username: string; password: string; displayName: string }) {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(data.password, salt);
+    const username = data.username.trim().toLowerCase();
 
     try {
-      const existing = await prisma.host.findUnique({ where: { email: data.email } });
+      const existing = await prisma.host.findUnique({ where: { username } });
       if (existing) {
-        throw new Error('Host with this email already exists');
+        throw new Error('Host with this username already exists');
       }
 
       return await prisma.host.create({
         data: {
-          email: data.email,
+          username,
           passwordHash,
           displayName: data.displayName,
         },
         select: {
           id: true,
-          email: true,
+          username: true,
           displayName: true,
           isDisabled: true,
           createdAt: true,
@@ -65,15 +66,14 @@ export class AdminService {
         throw e;
       }
 
-      // Memory fallback
-      const existsMem = inMemoryStore.hosts.some((h) => h.email.toLowerCase() === data.email.toLowerCase());
+      const existsMem = inMemoryStore.hosts.some((h) => h.username.toLowerCase() === username);
       if (existsMem) {
-        throw new Error('Host with this email already exists');
+        throw new Error('Host with this username already exists');
       }
 
       const newHost: MemoryHost = {
         id: `host_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
-        email: data.email,
+        username,
         passwordHash,
         displayName: data.displayName,
         isDisabled: false,
@@ -83,7 +83,7 @@ export class AdminService {
 
       return {
         id: newHost.id,
-        email: newHost.email,
+        username: newHost.username,
         displayName: newHost.displayName,
         isDisabled: newHost.isDisabled,
         createdAt: newHost.createdAt,
@@ -103,7 +103,7 @@ export class AdminService {
         data: { isDisabled },
         select: {
           id: true,
-          email: true,
+          username: true,
           displayName: true,
           isDisabled: true,
         },
@@ -118,7 +118,7 @@ export class AdminService {
 
       return {
         id: memHost.id,
-        email: memHost.email,
+        username: memHost.username,
         displayName: memHost.displayName,
         isDisabled: memHost.isDisabled,
       };
@@ -151,7 +151,7 @@ export class AdminService {
         orderBy: { createdAt: 'desc' },
         include: {
           host: {
-            select: { id: true, displayName: true, email: true },
+            select: { id: true, displayName: true, username: true },
           },
           _count: {
             select: { participants: true },
@@ -192,7 +192,7 @@ export class AdminService {
           host: {
             id: m.hostId,
             displayName: m.hostName,
-            email: m.hostEmail,
+            username: m.hostUsername,
           },
           _count: {
             participants: m.participantsCount,
@@ -213,7 +213,7 @@ export class AdminService {
         take: safeSize,
         include: {
           host: {
-            select: { id: true, displayName: true, email: true },
+            select: { id: true, displayName: true, username: true },
           },
           _count: {
             select: { participants: true },
@@ -239,7 +239,7 @@ export class AdminService {
           host: {
             id: m.hostId,
             displayName: m.hostName,
-            email: m.hostEmail,
+            username: m.hostUsername,
           },
           _count: {
             participants: m.participantsCount,

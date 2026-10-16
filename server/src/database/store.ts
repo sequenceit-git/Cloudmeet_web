@@ -1,12 +1,12 @@
 /**
  * In-memory fallback and state cache
- * Ensures that CloudMeet operates reliably and without crashing even before
+ * Ensures that CloudNews operates reliably and without crashing even before
  * PostgreSQL container/daemon is launched.
  */
 
 export interface MemoryHost {
   id: string;
-  email: string;
+  username: string;
   passwordHash: string;
   displayName: string;
   avatarUrl?: string;
@@ -20,7 +20,7 @@ export interface MemoryMeeting {
   title: string;
   hostId: string;
   hostName: string;
-  hostEmail: string;
+  hostUsername: string;
   status: 'ACTIVE' | 'ENDED';
   startedAt: Date;
   endedAt?: Date;

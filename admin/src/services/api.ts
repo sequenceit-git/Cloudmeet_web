@@ -12,7 +12,8 @@ export interface AdminUser {
 
 export interface RealHost {
   id: string;
-  email: string;
+  username: string;
+  email?: string;
   displayName: string;
   avatarUrl?: string;
   isDisabled: boolean;
@@ -31,7 +32,8 @@ export interface RealMeeting {
   host: {
     id: string;
     displayName: string;
-    email: string;
+    username?: string;
+    email?: string;
   };
   _count?: {
     participants: number;
@@ -127,7 +129,7 @@ export class AdminApiClient {
     return this.request('/admin/hosts');
   }
 
-  async createHost(data: { email: string; password: string; displayName: string }): Promise<{ host: RealHost }> {
+  async createHost(data: { username: string; password: string; displayName: string }): Promise<{ host: RealHost }> {
     return this.request('/admin/hosts', {
       method: 'POST',
       body: JSON.stringify(data),

@@ -82,21 +82,22 @@ export class AuthService {
   /**
    * Host Login
    */
-  async loginHost(email: string, password: string) {
+  async loginHost(username: string, password: string) {
+    const normalized = username.trim().toLowerCase();
     let host: any = null;
 
     try {
-      host = await prisma.host.findUnique({ where: { email } });
+      host = await prisma.host.findUnique({ where: { username: normalized } });
     } catch (e) {
       // Fallback
     }
 
     if (!host) {
-      host = inMemoryStore.hosts.find((h) => h.email.toLowerCase() === email.toLowerCase());
+      host = inMemoryStore.hosts.find((h) => h.username.toLowerCase() === normalized);
     }
 
     if (!host) {
-      throw new Error('Invalid host credentials');
+      throw new Error('Invalid username or password');
     }
 
     if (host.isDisabled) {
@@ -105,12 +106,13 @@ export class AuthService {
 
     const isValid = await bcrypt.compare(password, host.passwordHash);
     if (!isValid) {
-      throw new Error('Invalid host credentials');
+      throw new Error('Invalid username or password');
     }
 
+    const loginName = host.username as string;
     const payload: AuthUserPayload = {
       id: host.id,
-      email: host.email,
+      email: loginName,
       role: 'HOST',
       displayName: host.displayName,
     };
@@ -121,7 +123,8 @@ export class AuthService {
       token,
       host: {
         id: host.id,
-        email: host.email,
+        username: loginName,
+        email: loginName,
         displayName: host.displayName,
         avatarUrl: host.avatarUrl,
         role: 'HOST',

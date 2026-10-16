@@ -16,7 +16,7 @@ router.get('/health', (req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    service: 'CloudMeet API Engine',
+    service: 'CloudNews API Engine',
   });
 });
 

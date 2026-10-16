@@ -39,7 +39,7 @@ model Admin {
 
 model Host {
   id           String    @id @default(uuid())
-  email        String    @unique
+  username     String    @unique @map("email")
   passwordHash String    @map("password_hash")
   displayName  String    @map("display_name")
   avatarUrl    String?   @map("avatar_url")

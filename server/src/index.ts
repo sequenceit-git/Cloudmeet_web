@@ -13,7 +13,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Root health check endpoint
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', service: 'CloudMeet API Engine' });
+  res.json({ status: 'ok', service: 'CloudNews API Engine' });
 });
 
 // Deep link web landing & launcher for /join/:code
@@ -26,9 +26,9 @@ app.get('/join/:code', (req, res) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CloudMeet - Join Meeting ${code}</title>
-  <meta name="description" content="Click to join live meeting ${code} on CloudMeet">
-  <meta property="og:title" content="Join CloudMeet: ${code}">
+  <title>CloudNews - Join Meeting ${code}</title>
+  <meta name="description" content="Click to join live meeting ${code} on CloudNews">
+  <meta property="og:title" content="Join CloudNews: ${code}">
   <meta property="og:description" content="Ultra-low latency HD video meetings powered by Tencent TRTC">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -109,9 +109,9 @@ app.get('/join/:code', (req, res) => {
     <h1 style="font-size: 1.35rem; margin-bottom: 8px;">Joining Meeting</h1>
     <p style="color: #cbd5e1; font-size: 0.875rem;">Connecting you to the live video session...</p>
     <div class="room-code">${code}</div>
-    <a href="${deepLink}" class="btn">Open in CloudMeet App</a>
+    <a href="${deepLink}" class="btn">Open in CloudNews App</a>
     <p class="hint">
-      If the app didn't open automatically, tap the button above to launch CloudMeet on your device.
+      If the app didn't open automatically, tap the button above to launch CloudNews on your device.
     </p>
   </div>
 </body>
@@ -126,7 +126,7 @@ app.use(errorHandler);
 
 app.listen(ENV.PORT, () => {
   console.log(`===============================================`);
-  console.log(`🚀 CloudMeet Backend API running on port ${ENV.PORT}`);
+  console.log(`🚀 CloudNews Backend API running on port ${ENV.PORT}`);
   console.log(`📡 Environment: ${ENV.NODE_ENV}`);
   console.log(`🔑 TRTC SDKAppID: ${ENV.TRTC_SDK_APP_ID}`);
   console.log(`🔗 API Base: http://localhost:${ENV.PORT}/api/v1`);

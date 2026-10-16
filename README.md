@@ -1,6 +1,6 @@
-# CloudMeet Web & API Engine
+# CloudNews Web & API Engine
 
-> **CloudMeet** is an enterprise-grade online video conferencing cluster management portal and backend API engine, powered by **Tencent TRTC (Tencent Real-Time Communication)** for ultra-low latency global audio/video routing, dynamic credential issuance, host administration, and end-to-end meeting orchestration.
+> **CloudNews** is an enterprise-grade online video conferencing cluster management portal and backend API engine, powered by **Tencent TRTC (Tencent Real-Time Communication)** for ultra-low latency global audio/video routing, dynamic credential issuance, host administration, and end-to-end meeting orchestration.
 
 [![Node.js](https://img.shields.io/badge/Node.js-20%2B-brightgreen.svg)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-19.2-blue.svg)](https://react.dev/)

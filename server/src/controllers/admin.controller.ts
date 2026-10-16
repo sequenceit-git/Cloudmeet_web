@@ -22,12 +22,13 @@ export class AdminController {
 
   async createHost(req: Request, res: Response) {
     try {
-      const { email, password, displayName } = req.body;
-      if (!email || !password || !displayName) {
-        res.status(400).json({ error: 'Email, password, and display name are required' });
+      const username = String(req.body.username || req.body.email || '').trim().toLowerCase();
+      const { password, displayName } = req.body;
+      if (!username || !password || !displayName) {
+        res.status(400).json({ error: 'Username, password, and display name are required' });
         return;
       }
-      const host = await adminService.createHost({ email, password, displayName });
+      const host = await adminService.createHost({ username, password, displayName });
       res.status(201).json({ message: 'Host account created successfully', host });
     } catch (err: any) {
       res.status(400).json({ error: err.message });

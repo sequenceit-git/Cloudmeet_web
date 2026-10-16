@@ -19,12 +19,13 @@ export class AuthController {
 
   async loginHost(req: Request, res: Response, next: NextFunction) {
     try {
-      const { email, password } = req.body;
-      if (!email || !password) {
-        res.status(400).json({ error: 'Email and password are required' });
+      const username = String(req.body.username || req.body.email || '').trim();
+      const { password } = req.body;
+      if (!username || !password) {
+        res.status(400).json({ error: 'Username and password are required' });
         return;
       }
-      const result = await authService.loginHost(email, password);
+      const result = await authService.loginHost(username, password);
       res.json(result);
     } catch (err: any) {
       res.status(401).json({ error: err.message });

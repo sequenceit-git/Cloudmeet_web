@@ -37,7 +37,7 @@ export class MeetingService {
         },
         include: {
           host: {
-            select: { id: true, displayName: true, email: true },
+            select: { id: true, displayName: true, username: true },
           },
         },
       });
@@ -74,7 +74,7 @@ export class MeetingService {
       // Memory fallback
       const memHost = inMemoryStore.hosts.find((h) => h.id === hostId);
       const hostName = memHost?.displayName || 'Host';
-      const hostEmail = memHost?.email || 'host@cloudmeet.internal';
+      const hostUsername = memHost?.username || 'host';
 
       const memMeeting: MemoryMeeting = {
         id: `meet_${Date.now()}`,
@@ -82,7 +82,7 @@ export class MeetingService {
         title: title || `${hostName}'s Meeting`,
         hostId,
         hostName,
-        hostEmail,
+        hostUsername,
         status: 'ACTIVE',
         startedAt: new Date(),
         participantsCount: 1,
@@ -98,7 +98,7 @@ export class MeetingService {
           meetingCode: memMeeting.meetingCode,
           title: memMeeting.title,
           status: memMeeting.status,
-          host: { id: hostId, displayName: hostName, email: hostEmail },
+          host: { id: hostId, displayName: hostName, username: hostUsername },
         },
         trtc: {
           ...trtcCreds,
