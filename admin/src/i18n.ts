@@ -1,6 +1,6 @@
 export const adminTranslations = {
   zh: {
-    portalTitle: 'CloudNews 云会',
+    portalTitle: '云新闻',
     portalSub: '企业级 RTC 通信集群管理平台',
     adminBadge: '管理后台',
     navHosts: '主持人管理',
@@ -73,7 +73,7 @@ export const adminTranslations = {
     submitCreate: '确认开通',
 
     // Login Panel
-    loginTitle: 'CloudNews 管理控制台',
+    loginTitle: '云新闻管理控制台',
     loginSubtitle: '请输入管理员授权凭证以访问管理面板',
     loginEmailPlaceholder: 'admin@cloudmeet.cn',
     loginPwdPlaceholder: '请输入密码',
