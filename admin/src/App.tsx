@@ -276,6 +276,36 @@ export function App() {
 
   const meetingPageCount = Math.max(1, Math.ceil(meetingTotal / 10));
 
+  const meetingStart = (meeting: RealMeeting) => meeting.startedAt || meeting.createdAt;
+
+  const formatMeetingTime = (value?: string | null) => {
+    if (!value) return '—';
+    return new Date(value).toLocaleString(lang === 'zh' ? 'zh-CN' : 'en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const formatMeetingDuration = (meeting: RealMeeting) => {
+    const start = meetingStart(meeting);
+    if (!start) return '—';
+    const from = new Date(start).getTime();
+    const to = meeting.status === 'ACTIVE' || !meeting.endedAt ? Date.now() : new Date(meeting.endedAt).getTime();
+    const minutes = Math.max(0, Math.floor((to - from) / 60000));
+    const hours = Math.floor(minutes / 60);
+    const remain = minutes % 60;
+    if (lang === 'zh') {
+      if (hours > 0) return `${hours}小时${remain}分`;
+      if (minutes > 0) return `${minutes}分钟`;
+      return '不足1分钟';
+    }
+    if (hours > 0) return `${hours}h ${remain}m`;
+    if (minutes > 0) return `${minutes}m`;
+    return '< 1m';
+  };
+
   const hostDaysLeft = (createdAt?: string) => {
     if (!createdAt) return null;
     const expiresAt = new Date(createdAt).getTime() + 30 * 24 * 60 * 60 * 1000;
@@ -1099,7 +1129,9 @@ export function App() {
                         <th>{t.colHost}</th>
                         <th>{t.colAttendees}</th>
                         <th>{t.colStatus}</th>
-                        <th>{t.colElapsed}</th>
+                        <th>{t.colStart}</th>
+                        <th>{t.colEnd}</th>
+                        <th>{t.colDuration}</th>
                         <th style={{ textAlign: 'right' }}>{t.colActions}</th>
                       </tr>
                     </thead>
@@ -1138,10 +1170,16 @@ export function App() {
                               </span>
                             )}
                           </td>
-                          <td style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
+                          <td style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
+                            {formatMeetingTime(meetingStart(m))}
+                          </td>
+                          <td style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
+                            {m.status === 'ACTIVE' ? t.inProgress : formatMeetingTime(m.endedAt)}
+                          </td>
+                          <td style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                               <Clock size={12} />
-                              {m.createdAt ? new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                              {formatMeetingDuration(m)}
                             </div>
                           </td>
                           <td style={{ textAlign: 'right' }}>
@@ -1235,10 +1273,13 @@ export function App() {
                         </div>
                       </div>
 
-                      {/* Start time */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-                        <Clock size={12} />
-                        <span>{m.createdAt ? new Date(m.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : '-'}</span>
+                      <div style={{ display: 'grid', gap: 4, fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+                        <div>{t.colStart}: {formatMeetingTime(meetingStart(m))}</div>
+                        <div>{t.colEnd}: {m.status === 'ACTIVE' ? t.inProgress : formatMeetingTime(m.endedAt)}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <Clock size={12} />
+                          {t.colDuration}: {formatMeetingDuration(m)}
+                        </div>
                       </div>
 
                       <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>

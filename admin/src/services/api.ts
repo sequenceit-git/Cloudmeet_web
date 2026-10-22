@@ -29,6 +29,8 @@ export interface RealMeeting {
   title: string;
   status: 'ACTIVE' | 'ENDED';
   createdAt: string;
+  startedAt?: string;
+  endedAt?: string | null;
   host: {
     id: string;
     displayName: string;

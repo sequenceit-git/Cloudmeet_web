@@ -215,6 +215,8 @@ export class AdminService {
           title: m.title,
           status: m.status,
           createdAt: m.startedAt,
+          startedAt: m.startedAt,
+          endedAt: m.endedAt ?? null,
           host: {
             id: m.hostId,
             displayName: m.hostName,
@@ -262,6 +264,8 @@ export class AdminService {
           title: m.title,
           status: m.status,
           createdAt: m.startedAt,
+          startedAt: m.startedAt,
+          endedAt: m.endedAt ?? null,
           host: {
             id: m.hostId,
             displayName: m.hostName,
