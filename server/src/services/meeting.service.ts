@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { prisma } from '../database/prisma';
 import { inMemoryStore, MemoryMeeting } from '../database/store';
 import { toCallUserId, trtcService } from './trtc.service';
@@ -188,9 +189,19 @@ export class MeetingService {
       throw new Error(validation.reason || 'Invalid meeting');
     }
 
-    const userId = toCallUserId(
-      guestUserId || `guest_${Date.now()}_${Math.floor(Math.random() * 1000)}`
-    );
+    const hostCallUserId = validation.meeting.hostUserId;
+    let userId: string;
+
+    if (guestUserId && guestUserId.trim()) {
+      userId = toCallUserId(guestUserId.trim());
+      if (userId === hostCallUserId) {
+        userId = toCallUserId(`g_${randomUUID().replace(/-/g, '').slice(0, 30)}`);
+      }
+    } else {
+      do {
+        userId = toCallUserId(`g_${randomUUID().replace(/-/g, '').slice(0, 30)}`);
+      } while (userId === hostCallUserId);
+    }
 
     try {
       await prisma.participant.create({
