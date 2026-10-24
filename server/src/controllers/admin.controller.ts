@@ -89,6 +89,15 @@ export class AdminController {
       res.status(400).json({ error: err.message });
     }
   }
+
+  async deleteAllMeetings(_req: Request, res: Response) {
+    try {
+      const result = await adminService.deleteAllMeetings();
+      res.json({ message: 'All meetings deleted successfully', count: result.count });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  }
 }
 
 export const adminController = new AdminController();

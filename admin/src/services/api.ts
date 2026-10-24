@@ -162,6 +162,12 @@ export class AdminApiClient {
     });
   }
 
+  async deleteAllMeetings(): Promise<{ message: string; count: number }> {
+    return this.request('/admin/meetings', {
+      method: 'DELETE',
+    });
+  }
+
   async endMeeting(id: string): Promise<{ message: string; meeting: RealMeeting }> {
     return this.request(`/admin/meetings/${id}/end`, {
       method: 'POST',

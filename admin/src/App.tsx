@@ -7,6 +7,34 @@ import {
   type RealHost,
   type RealMeeting,
 } from './services/api';
+
+const ADMIN_TABS = ['hosts', 'meetings', 'trtc'] as const;
+type AdminTab = (typeof ADMIN_TABS)[number];
+const ADMIN_TAB_STORAGE_KEY = 'cloudmeet_admin_tab';
+
+function isAdminTab(value: string): value is AdminTab {
+  return (ADMIN_TABS as readonly string[]).includes(value);
+}
+
+function readStoredTab(): AdminTab {
+  const fromHash = window.location.hash.replace(/^#/, '');
+  if (isAdminTab(fromHash)) return fromHash;
+  try {
+    const stored = localStorage.getItem(ADMIN_TAB_STORAGE_KEY);
+    if (stored && isAdminTab(stored)) return stored;
+  } catch {
+    /* ignore quota / private mode */
+  }
+  return 'hosts';
+}
+
+function persistTab(tab: AdminTab) {
+  try {
+    localStorage.setItem(ADMIN_TAB_STORAGE_KEY, tab);
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
 import {
   Users,
   Video,
@@ -46,7 +74,8 @@ export function App() {
   const [loginError, setLoginError] = useState<string | null>(null);
 
   // App Navigation & Filter State
-  const [activeTab, setActiveTab] = useState<'hosts' | 'meetings' | 'trtc'>('hosts');
+  const [activeTab, setActiveTab] = useState<AdminTab>(() => readStoredTab());
+  const [deletingAllMeetings, setDeletingAllMeetings] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddHostModal, setShowAddHostModal] = useState(false);
 
@@ -90,6 +119,30 @@ export function App() {
     window.addEventListener('auth:unauthorized', handleUnauthorized);
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
   }, []);
+
+  const selectTab = useCallback((tab: AdminTab) => {
+    setActiveTab(tab);
+    persistTab(tab);
+    if (window.location.hash !== `#${tab}`) {
+      window.location.hash = tab;
+    }
+  }, []);
+
+  useEffect(() => {
+    persistTab(activeTab);
+    if (window.location.hash !== `#${activeTab}`) {
+      window.history.replaceState(null, '', `#${activeTab}`);
+    }
+    const onHashChange = () => {
+      const tab = window.location.hash.replace(/^#/, '');
+      if (isAdminTab(tab)) {
+        setActiveTab(tab);
+        persistTab(tab);
+      }
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, [activeTab]);
 
   // Fetch Live Real Data from API
   const fetchAllData = useCallback(async (silent = false) => {
@@ -271,6 +324,32 @@ export function App() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to delete meeting';
       alert(msg);
+    }
+  };
+
+  const handleDeleteAllMeetings = async () => {
+    if (meetingTotal === 0 && meetings.length === 0) return;
+    if (!window.confirm(t.deleteAllMeetingsConfirm)) return;
+
+    setDeletingAllMeetings(true);
+    try {
+      await adminApi.deleteAllMeetings();
+      setMeetings([]);
+      setMeetingTotal(0);
+      setMeetingPage(1);
+      setDashboardMetrics((prev) => ({
+        ...prev,
+        activeMeetingsCount: 0,
+        totalMeetingsCount: 0,
+        liveParticipants: 0,
+      }));
+      await fetchAllData(true);
+      alert(t.deleteAllMeetingsSuccess);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : t.deleteAllMeetingsError;
+      alert(msg);
+    } finally {
+      setDeletingAllMeetings(false);
     }
   };
 
@@ -554,14 +633,14 @@ export function App() {
           {/* 2. Desktop Navigation Segmented Tabs */}
           <nav className="header-nav header-nav-desktop">
             <button
-              onClick={() => setActiveTab('hosts')}
+              onClick={() => selectTab('hosts')}
               className={`nav-tab-btn ${activeTab === 'hosts' ? 'active' : ''}`}
             >
               <Users size={16} />
               <span>{t.navHosts}</span>
             </button>
             <button
-              onClick={() => setActiveTab('meetings')}
+              onClick={() => selectTab('meetings')}
               className={`nav-tab-btn ${activeTab === 'meetings' ? 'active' : ''}`}
             >
               <Video size={16} />
@@ -571,7 +650,7 @@ export function App() {
               )}
             </button>
             <button
-              onClick={() => setActiveTab('trtc')}
+              onClick={() => selectTab('trtc')}
               className={`nav-tab-btn ${activeTab === 'trtc' ? 'active' : ''}`}
             >
               <Server size={16} />
@@ -634,14 +713,14 @@ export function App() {
         {/* 4. Mobile Segmented Navigation Bar */}
         <nav className="header-nav header-nav-mobile">
           <button
-            onClick={() => setActiveTab('hosts')}
+            onClick={() => selectTab('hosts')}
             className={`nav-tab-btn ${activeTab === 'hosts' ? 'active' : ''}`}
           >
             <Users size={15} />
             <span>{t.navHosts}</span>
           </button>
           <button
-            onClick={() => setActiveTab('meetings')}
+            onClick={() => selectTab('meetings')}
             className={`nav-tab-btn ${activeTab === 'meetings' ? 'active' : ''}`}
           >
             <Video size={15} />
@@ -651,7 +730,7 @@ export function App() {
             )}
           </button>
           <button
-            onClick={() => setActiveTab('trtc')}
+            onClick={() => selectTab('trtc')}
             className={`nav-tab-btn ${activeTab === 'trtc' ? 'active' : ''}`}
           >
             <Server size={15} />
@@ -1083,9 +1162,31 @@ export function App() {
         {/* ==================================================== */}
         {activeTab === 'meetings' && (
           <div className="glass-panel" style={{ overflow: 'hidden' }}>
-            <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--border-subtle)' }}>
-              <h2 style={{ fontSize: '1.125rem', fontWeight: 700 }}>{t.meetingMonitorTitle}</h2>
-              <p style={{ fontSize: '0.8125rem', color: 'var(--text-dim)' }}>{t.meetingMonitorSub}</p>
+            <div
+              style={{
+                padding: '18px 20px',
+                borderBottom: '1px solid var(--border-subtle)',
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+                gap: 16,
+                flexWrap: 'wrap',
+              }}
+            >
+              <div>
+                <h2 style={{ fontSize: '1.125rem', fontWeight: 700 }}>{t.meetingMonitorTitle}</h2>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--text-dim)' }}>{t.meetingMonitorSub}</p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={handleDeleteAllMeetings}
+                disabled={deletingAllMeetings || (meetingTotal === 0 && meetings.length === 0)}
+                style={{ opacity: meetingTotal === 0 && meetings.length === 0 ? 0.5 : 1 }}
+              >
+                <Trash2 size={15} />
+                <span>{deletingAllMeetings ? (lang === 'zh' ? '删除中...' : 'Deleting...') : t.deleteAllMeetings}</span>
+              </button>
             </div>
 
             {loadingData && meetings.length === 0 ? (

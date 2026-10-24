@@ -319,6 +319,17 @@ export class AdminService {
       return { id: meetingId };
     }
   }
+
+  async deleteAllMeetings() {
+    try {
+      const result = await prisma.meeting.deleteMany({});
+      return { count: result.count };
+    } catch {
+      const count = inMemoryStore.meetings.length;
+      inMemoryStore.meetings = [];
+      return { count };
+    }
+  }
 }
 
 export const adminService = new AdminService();
