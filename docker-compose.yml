@@ -25,7 +25,9 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    command: sh -c "npx prisma db push --skip-generate ; node dist/index.js"
+    # `&&` so the API does not boot when the database schema step fails.
+    # Do not run `docker compose down -v`: that deletes the postgres volume.
+    command: sh -c "npx prisma db push --skip-generate && node dist/index.js"
     networks:
       - internal-net
       - traefik-net

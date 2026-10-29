@@ -5,6 +5,7 @@ import routes from './routes';
 import { errorHandler } from './middleware/error.middleware';
 import { adminService } from './services/admin.service';
 import { meetingService } from './services/meeting.service';
+import { prisma } from './database/prisma';
 
 const app = express();
 
@@ -142,17 +143,34 @@ function scheduleEmptyRoomCleanup() {
   });
 }
 
-app.listen(ENV.PORT, () => {
-  scheduleHostCleanup();
-  scheduleEmptyRoomCleanup();
-  setInterval(scheduleHostCleanup, HOST_CLEANUP_INTERVAL_MS);
-  setInterval(scheduleEmptyRoomCleanup, EMPTY_ROOM_CHECK_MS);
-  console.log(`===============================================`);
-  console.log(`🚀 CloudNews Backend API running on port ${ENV.PORT}`);
-  console.log(`📡 Environment: ${ENV.NODE_ENV}`);
-  console.log(`🔑 TRTC SDKAppID: ${ENV.TRTC_SDK_APP_ID}`);
-  console.log(`🔗 API Base: http://localhost:${ENV.PORT}/api/v1`);
-  console.log(`===============================================`);
-});
+async function start() {
+  // In production a failed database must stop the process. Otherwise hosts and
+  // meetings are written to RAM and disappear on the next image rebuild.
+  if (ENV.NODE_ENV === 'production') {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      console.log('PostgreSQL connected. Admin data is stored on the database volume.');
+    } catch (err) {
+      console.error('PostgreSQL connection failed. The API will not start, so data is not saved in memory.');
+      console.error(err);
+      process.exit(1);
+    }
+  }
+
+  app.listen(ENV.PORT, () => {
+    scheduleHostCleanup();
+    scheduleEmptyRoomCleanup();
+    setInterval(scheduleHostCleanup, HOST_CLEANUP_INTERVAL_MS);
+    setInterval(scheduleEmptyRoomCleanup, EMPTY_ROOM_CHECK_MS);
+    console.log(`===============================================`);
+    console.log(`🚀 CloudNews Backend API running on port ${ENV.PORT}`);
+    console.log(`📡 Environment: ${ENV.NODE_ENV}`);
+    console.log(`🔑 TRTC SDKAppID: ${ENV.TRTC_SDK_APP_ID}`);
+    console.log(`🔗 API Base: http://localhost:${ENV.PORT}/api/v1`);
+    console.log(`===============================================`);
+  });
+}
+
+start();
 
 export default app;
