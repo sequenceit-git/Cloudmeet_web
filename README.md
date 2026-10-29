@@ -143,8 +143,8 @@ cd cloudmeet_web
 cp .env.production.example .env
 nano .env
 
-# 2. Ensure the Traefik external network exists (default: traefik-public)
-docker network inspect traefik-public 2>/dev/null || docker network create traefik-public
+# 2. Find the network your running Traefik container is attached to, and set it as TRAEFIK_NETWORK in .env (default: proxy)
+docker inspect traefik --format '{{range $name, $_ := .NetworkSettings.Networks}}{{$name}}{{"\n"}}{{end}}'
 
 # 3. Build and launch containers in the background
 docker compose up -d --build
@@ -201,7 +201,7 @@ All inbound HTTPS traffic to `admin.cloudnewsmeet.com` is routed by your existin
 | Variable | Default / Example | Purpose |
 | :--- | :--- | :--- |
 | `DOMAIN` | `admin.cloudnewsmeet.com` | Target production domain name |
-| `TRAEFIK_NETWORK` | `traefik-public` | Docker network of your running Traefik container |
+| `TRAEFIK_NETWORK` | `proxy` | Docker network of your running Traefik container |
 | `TRAEFIK_ENTRYPOINT` | `websecure` | Traefik HTTPS entrypoint name |
 | `TRAEFIK_CERT_RESOLVER`| `letsencrypt` | Traefik ACME certificate resolver name |
 | `PORT` | `5000` | Node.js backend port |
