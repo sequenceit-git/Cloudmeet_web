@@ -509,7 +509,7 @@ export function App() {
                   marginBottom: 6,
                 }}
               >
-                {t.emailLabel}
+                {t.loginEmailLabel}
               </label>
               <div style={{ position: 'relative' }}>
                 <Mail
@@ -539,7 +539,7 @@ export function App() {
                   marginBottom: 6,
                 }}
               >
-                {t.pwdLabel}
+                {t.loginPwdLabel}
               </label>
               <div style={{ position: 'relative' }}>
                 <Lock
