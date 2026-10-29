@@ -582,23 +582,6 @@ export function App() {
               )}
             </button>
           </form>
-
-          {/* Quick Credential Hint */}
-          <div
-            style={{
-              marginTop: 24,
-              padding: '12px 14px',
-              borderRadius: 8,
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid var(--border-subtle)',
-              fontSize: '0.75rem',
-              color: 'var(--text-dim)',
-              textAlign: 'center',
-            }}
-          >
-            <span style={{ color: 'var(--accent-cyan)', fontWeight: 600 }}>💡 提示：</span>
-            <span>{t.defaultCredsNotice}</span>
-          </div>
         </div>
 
         {/* Footer info */}

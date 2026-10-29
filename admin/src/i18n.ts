@@ -87,7 +87,6 @@ export const adminTranslations = {
     loginBtn: '立即登录',
     loginLoading: '正在验证身份...',
     logoutBtn: '退出登录',
-    defaultCredsNotice: '默认管理员：admin@cloudmeet.cn / 密码：admin123456',
 
     // Empty States
     emptyHostsTitle: '暂无主持人账号',
@@ -185,7 +184,6 @@ export const adminTranslations = {
     loginBtn: 'Sign In Securely',
     loginLoading: 'Authenticating...',
     logoutBtn: 'Log Out',
-    defaultCredsNotice: 'Default Admin: admin@cloudmeet.cn / Password: admin123456',
 
     // Empty States
     emptyHostsTitle: 'No Host Accounts Found',
