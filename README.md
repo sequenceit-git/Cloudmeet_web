@@ -129,7 +129,7 @@ This concurrently launches:
 
 ## 4. Production Deployment (Docker & Traefik)
 
-- **Domain**: `cloudmeet.sequenceit.software`
+- **Domain**: `admin.cloudnewsmeet.com`
 - **Server IP**: `69.62.75.165`
 
 On your Linux VPS (`69.62.75.165`), clone or upload the `cloudmeet_web` repository:
@@ -152,12 +152,12 @@ docker compose up -d --build
 
 ## 5. Traefik Routing Configuration
 
-All inbound HTTPS traffic to `cloudmeet.sequenceit.software` is routed by your existing Traefik reverse proxy:
+All inbound HTTPS traffic to `admin.cloudnewsmeet.com` is routed by your existing Traefik reverse proxy:
 
 | Destination | Path Rule | Priority | Internal Port | Description |
 | :--- | :--- | :---: | :---: | :--- |
-| **Backend API** (`server`) | `Host(`cloudmeet.sequenceit.software`) && (PathPrefix(`/api`) \|\| PathPrefix(`/health`))` | 20 | `5000` | Handles REST API calls and health probes |
-| **Admin Portal** (`admin`) | `Host(`cloudmeet.sequenceit.software`)` | 10 | `80` | Serves the single-page application via Nginx |
+| **Backend API** (`server`) | `Host(`admin.cloudnewsmeet.com`) && (PathPrefix(`/api`) \|\| PathPrefix(`/health`) \|\| PathPrefix(`/join`))` | 20 | `5000` | Handles REST API calls and health probes |
+| **Admin Portal** (`admin`) | `Host(`admin.cloudnewsmeet.com`)` | 10 | `80` | Serves the single-page application via Nginx |
 
 ---
 
@@ -198,7 +198,7 @@ All inbound HTTPS traffic to `cloudmeet.sequenceit.software` is routed by your e
 
 | Variable | Default / Example | Purpose |
 | :--- | :--- | :--- |
-| `DOMAIN` | `cloudmeet.sequenceit.software` | Target production domain name |
+| `DOMAIN` | `admin.cloudnewsmeet.com` | Target production domain name |
 | `TRAEFIK_NETWORK` | `traefik-public` | Docker network of your running Traefik container |
 | `TRAEFIK_ENTRYPOINT` | `websecure` | Traefik HTTPS entrypoint name |
 | `TRAEFIK_CERT_RESOLVER`| `letsencrypt` | Traefik ACME certificate resolver name |

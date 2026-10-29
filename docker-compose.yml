@@ -1,6 +1,6 @@
 # ==============================================================================
 # CloudMeet Production Stack (Connected to your EXISTING Traefik instance)
-# Domain: cloudmeet.sequenceit.software | Server: 69.62.75.165
+# Domain: admin.cloudnewsmeet.com | Server: 69.62.75.165
 # ==============================================================================
 
 services:
@@ -34,7 +34,7 @@ services:
       # Expose through your existing Traefik instance
       - "traefik.docker.network=${TRAEFIK_NETWORK:-traefik-public}"
       # Route all /api and /health requests to Backend API (Priority 20)
-      - "traefik.http.routers.cloudmeet-api.rule=Host(`${DOMAIN:-cloudmeet.sequenceit.software}`) && (PathPrefix(`/api`) || PathPrefix(`/health`))"
+      - "traefik.http.routers.cloudmeet-api.rule=Host(`${DOMAIN:-admin.cloudnewsmeet.com}`) && (PathPrefix(`/api`) || PathPrefix(`/health`) || PathPrefix(`/join`))"
       - "traefik.http.routers.cloudmeet-api.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
       - "traefik.http.routers.cloudmeet-api.tls=true"
       - "traefik.http.routers.cloudmeet-api.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-letsencrypt}"
@@ -65,7 +65,7 @@ services:
       # Expose through your existing Traefik instance
       - "traefik.docker.network=${TRAEFIK_NETWORK:-traefik-public}"
       # Route all frontend web traffic to Admin Nginx (Priority 10)
-      - "traefik.http.routers.cloudmeet-web.rule=Host(`${DOMAIN:-cloudmeet.sequenceit.software}`)"
+      - "traefik.http.routers.cloudmeet-web.rule=Host(`${DOMAIN:-admin.cloudnewsmeet.com}`)"
       - "traefik.http.routers.cloudmeet-web.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
       - "traefik.http.routers.cloudmeet-web.tls=true"
       - "traefik.http.routers.cloudmeet-web.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-letsencrypt}"
