@@ -20,8 +20,8 @@ services:
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
       TRTC_SDK_APP_ID: ${TRTC_SDK_APP_ID:?Set TRTC_SDK_APP_ID in .env}
       TRTC_SECRET_KEY: ${TRTC_SECRET_KEY:?Set TRTC_SECRET_KEY in .env}
-      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@cloudmeet.cn}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123456}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?Set ADMIN_EMAIL in .env}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
     depends_on:
       postgres:
         condition: service_healthy
