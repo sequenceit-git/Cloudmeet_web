@@ -1,5 +1,10 @@
 import dotenv from 'dotenv';
-dotenv.config();
+import path from 'path';
+
+// Single source of truth: the root `Cloudmeet_web/.env`.
+// (src/config or dist/config -> ../../../ is the repo root.)
+// In Docker the variables come from docker-compose, so a missing file is fine.
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 export const ENV = {
   PORT: parseInt(process.env.PORT || '5000', 10),

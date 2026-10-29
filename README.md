@@ -104,11 +104,13 @@ npm --prefix admin install
 ```
 
 ### Configure Local Environment
-Copy the server environment template:
+There is a single environment file for the whole project: the root `.env`. The backend, Docker Compose, and production all read from it.
 
 ```bash
-cp server/.env.example server/.env
+cp .env.production.example .env
 ```
+
+Fill in the values. For local development you can also add `DATABASE_URL` (optional; without a reachable PostgreSQL the API falls back to the in-memory store).
 
 ### Start Development Servers
 From the `cloudmeet_web` root directory, execute:
