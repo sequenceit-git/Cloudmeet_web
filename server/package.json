@@ -7,9 +7,9 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:generate": "node ./scripts/with-root-env.cjs prisma generate",
+    "prisma:migrate": "node ./scripts/with-root-env.cjs prisma migrate dev",
+    "prisma:studio": "node ./scripts/with-root-env.cjs prisma studio"
   },
   "keywords": [
     "cloudmeet",
