@@ -9,7 +9,7 @@ WORKDIR /app
 
 # Build arguments for customizable environment variables
 ARG VITE_API_BASE_URL=/api/v1
-ARG VITE_TRTC_SDK_APP_ID=1400000000
+ARG VITE_TRTC_SDK_APP_ID=
 ARG VITE_APP_TITLE="CloudMeet 云会 - 管理后台"
 
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL

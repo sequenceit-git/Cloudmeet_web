@@ -17,9 +17,9 @@ services:
       NODE_ENV: production
       PORT: 5000
       DATABASE_URL: postgresql://${POSTGRES_USER:-cloudmeet}:${POSTGRES_PASSWORD:-cloudmeet_secure_pass_2026}@postgres:5432/${POSTGRES_DB:-cloudmeet_db}?schema=public
-      JWT_SECRET: ${JWT_SECRET:-cloudmeet_production_jwt_secret_2026_xyz}
-      TRTC_SDK_APP_ID: ${TRTC_SDK_APP_ID:-1400000000}
-      TRTC_SECRET_KEY: ${TRTC_SECRET_KEY:-your_trtc_secret_key_here}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      TRTC_SDK_APP_ID: ${TRTC_SDK_APP_ID:?Set TRTC_SDK_APP_ID in .env}
+      TRTC_SECRET_KEY: ${TRTC_SECRET_KEY:?Set TRTC_SECRET_KEY in .env}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@cloudmeet.cn}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123456}
     depends_on:
@@ -51,7 +51,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_BASE_URL: /api/v1
-        VITE_TRTC_SDK_APP_ID: ${TRTC_SDK_APP_ID:-1400000000}
+        VITE_TRTC_SDK_APP_ID: ${TRTC_SDK_APP_ID:?Set TRTC_SDK_APP_ID in .env}
         VITE_APP_TITLE: "CloudMeet 云会 - 管理后台"
     container_name: cloudmeet-admin
     restart: unless-stopped

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ENV } from './config/env';
 import { adminTranslations } from './i18n';
 import {
   adminApi,
@@ -604,7 +603,7 @@ export function App() {
 
         {/* Footer info */}
         <div style={{ marginTop: 24, fontSize: '0.75rem', color: 'var(--text-dim)', textAlign: 'center' }}>
-          CloudNews Enterprise · Tencent TRTC Inside · SDKAppID: {ENV.TRTC_SDK_APP_ID}
+          CloudNews Enterprise · Tencent TRTC Inside
         </div>
       </div>
     );
@@ -1517,7 +1516,7 @@ export function App() {
                       color: 'var(--accent-cyan)',
                     }}
                   >
-                    {ENV.TRTC_SDK_APP_ID}
+                    {dashboardMetrics.sdkAppId || '—'}
                   </div>
                 </div>
 
@@ -1548,7 +1547,9 @@ export function App() {
                       wordBreak: 'break-all',
                     }}
                   >
-                    •••••••••••••••••••••••••••••••• ({t.serverKeyNotice})
+                    {dashboardMetrics.sdkConfigured
+                      ? `•••••••••••••••••••••••••••••••• (${t.serverKeyNotice})`
+                      : '— not configured (set TRTC_SECRET_KEY in the server .env)'}
                   </div>
                 </div>
 
