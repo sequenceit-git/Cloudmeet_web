@@ -123,9 +123,7 @@ This concurrently launches:
 - **Backend API**: [http://localhost:5000/api/v1](http://localhost:5000/api/v1)
 - **Web Admin Portal**: [http://localhost:5173/](http://localhost:5173/)
 
-**Default Administrator Credentials**:
-- **Email**: `admin@cloudmeet.cn`
-- **Password**: `admin123456`
+**Administrator login** comes from `ADMIN_EMAIL` and `ADMIN_PASSWORD` in the root `.env`. Restart the API after changing them.
 
 ---
 

@@ -3,6 +3,7 @@ import cors from 'cors';
 import { ENV } from './config/env';
 import routes from './routes';
 import { errorHandler } from './middleware/error.middleware';
+import { authService } from './services/auth.service';
 import { adminService } from './services/admin.service';
 import { meetingService } from './services/meeting.service';
 import { prisma } from './database/prisma';
@@ -150,8 +151,9 @@ async function start() {
     try {
       await prisma.$queryRaw`SELECT 1`;
       console.log('PostgreSQL connected. Admin data is stored on the database volume.');
+      await authService.syncEnvAdmin();
     } catch (err) {
-      console.error('PostgreSQL connection failed. The API will not start, so data is not saved in memory.');
+      console.error('PostgreSQL connection failed, or admin login could not be synced from .env.');
       console.error(err);
       process.exit(1);
     }

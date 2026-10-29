@@ -17,4 +17,8 @@ export const ENV = {
   TRTC_SDK_APP_ID: parseInt(process.env.TRTC_SDK_APP_ID || '20049417', 10),
   TRTC_SECRET_KEY: process.env.TRTC_SECRET_KEY || '0379186cd7963687b317bcdd4e8ac72da8db4ab50303dadf9acc8276920b9c8b',
   TRTC_EXPIRE_TIME: parseInt(process.env.TRTC_EXPIRE_TIME || '86400', 10), // 24 hours in seconds
+
+  // Admin panel login. Edit these in the root .env and restart the API.
+  ADMIN_EMAIL: (process.env.ADMIN_EMAIL || '').trim(),
+  ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || '',
 };

@@ -7,6 +7,43 @@ import { AuthUserPayload } from '../middleware/auth.middleware';
 
 export class AuthService {
   /**
+   * Creates or updates the admin account from ADMIN_EMAIL / ADMIN_PASSWORD.
+   * A restart after editing the root .env applies the new login.
+   */
+  async syncEnvAdmin() {
+    const email = ENV.ADMIN_EMAIL.toLowerCase();
+    const password = ENV.ADMIN_PASSWORD;
+    if (!email || !password) {
+      throw new Error('ADMIN_EMAIL and ADMIN_PASSWORD must be set');
+    }
+
+    const existing = await prisma.admin.findUnique({ where: { email } });
+    if (existing) {
+      const same = await bcrypt.compare(password, existing.passwordHash);
+      if (same && existing.isActive) return;
+      await prisma.admin.update({
+        where: { email },
+        data: {
+          passwordHash: await bcrypt.hash(password, 10),
+          isActive: true,
+        },
+      });
+      console.log(`[AuthService] Updated admin login for ${email} from env.`);
+      return;
+    }
+
+    await prisma.admin.create({
+      data: {
+        email,
+        passwordHash: await bcrypt.hash(password, 10),
+        name: 'Administrator',
+        isActive: true,
+      },
+    });
+    console.log(`[AuthService] Created admin login for ${email} from env.`);
+  }
+
+  /**
    * Admin Login
    */
   async loginAdmin(email: string, password: string) {
@@ -48,31 +85,18 @@ export class AuthService {
       };
     }
 
-    // Check default in-memory admin
-    const defaultAdmin = inMemoryStore.admin;
-    const isDefaultEmail =
-      email.toLowerCase() === defaultAdmin.email.toLowerCase() ||
-      email.toLowerCase() === 'admin@cloudmeet.io' ||
-      email.toLowerCase() === 'admin';
-
-    if (isDefaultEmail && password === 'admin123456') {
+    const envEmail = ENV.ADMIN_EMAIL.toLowerCase();
+    if (envEmail && ENV.ADMIN_PASSWORD && email.toLowerCase() === envEmail && password === ENV.ADMIN_PASSWORD) {
       const payload: AuthUserPayload = {
-        id: defaultAdmin.id,
-        email: defaultAdmin.email,
+        id: 'env-admin',
+        email: envEmail,
         role: 'ADMIN',
-        displayName: defaultAdmin.name,
+        displayName: 'Administrator',
       };
-
       const token = jwt.sign(payload, ENV.JWT_SECRET, { expiresIn: '7d' });
-
       return {
         token,
-        user: {
-          id: defaultAdmin.id,
-          email: defaultAdmin.email,
-          name: defaultAdmin.name,
-          role: 'ADMIN',
-        },
+        user: { id: payload.id, email: envEmail, name: payload.displayName, role: 'ADMIN' },
       };
     }
 
