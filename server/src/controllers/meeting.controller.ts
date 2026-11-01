@@ -100,18 +100,46 @@ export class MeetingController {
     }
   }
 
-  async endMeeting(req: AuthenticatedRequest, res: Response) {
+  async endMeeting(req: Request, res: Response) {
     try {
-      const userId = req.user?.id;
-      const isAdmin = req.user?.role === 'ADMIN' || req.user?.role === 'SUPER_ADMIN';
+      const authUser = (req as any).user;
+      const userId = authUser?.id || String(req.body?.userId || '').trim();
+      const isAdmin = authUser?.role === 'ADMIN' || authUser?.role === 'SUPER_ADMIN';
       const { id } = req.params;
       if (!userId) {
-        res.status(401).json({ error: 'Unauthorized user' });
+        res.status(401).json({ error: 'User id is required to end meeting' });
         return;
       }
       const result = await meetingService.endMeeting(id, userId, isAdmin);
       if (result?.meetingCode) closeMeetingRoom(result.meetingCode);
       res.json({ message: 'Meeting ended successfully', meeting: result });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  }
+
+  async transferHost(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const authUser = (req as any).user;
+      const currentHostUserId = authUser?.id || String(req.body?.currentHostUserId || '').trim();
+      const newHostUserId = String(req.body?.newHostUserId || '').trim();
+
+      if (!id || !currentHostUserId || !newHostUserId) {
+        res.status(400).json({ error: 'Meeting id, currentHostUserId and newHostUserId are required' });
+        return;
+      }
+
+      const result = await meetingService.transferHost(id, currentHostUserId, newHostUserId);
+      if (result?.meetingCode) {
+        broadcastMeetingChat(result.meetingCode, {
+          type: 'host_transferred',
+          userId: result.newHost.userId,
+          displayName: result.newHost.displayName,
+          at: new Date().toISOString(),
+        });
+      }
+      res.json({ message: 'Host transferred successfully', newHost: result.newHost });
     } catch (err: any) {
       res.status(400).json({ error: err.message });
     }

@@ -10,7 +10,7 @@ type Member = {
 };
 
 export type ChatPayload = {
-  type: 'text' | 'image' | 'file' | 'ended';
+  type: 'text' | 'image' | 'file' | 'ended' | 'host_transferred';
   id?: string;
   userId?: string;
   displayName?: string;

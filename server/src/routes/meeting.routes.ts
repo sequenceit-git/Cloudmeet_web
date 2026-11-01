@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { meetingController } from '../controllers/meeting.controller';
-import { authenticateToken, requireHost } from '../middleware/auth.middleware';
+import { authenticateToken, optionalAuthToken, requireHost } from '../middleware/auth.middleware';
 
 const router = Router();
 
@@ -22,7 +22,10 @@ router.get('/:code/files/:fileId', meetingController.downloadMeetingFile);
 // A person left the room. The meeting stays open until it has been empty for 5 minutes.
 router.post('/:id/leave', meetingController.leaveMeeting);
 
+// Transfer host role to another participant before leaving
+router.post('/:id/transfer-host', optionalAuthToken, meetingController.transferHost);
+
 // Host or Admin ends meeting for all
-router.post('/:id/end', authenticateToken, meetingController.endMeeting);
+router.post('/:id/end', optionalAuthToken, meetingController.endMeeting);
 
 export default router;

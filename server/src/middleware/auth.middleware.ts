@@ -31,6 +31,19 @@ export const authenticateToken = (req: AuthenticatedRequest, res: Response, next
   }
 };
 
+export const optionalAuthToken = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, ENV.JWT_SECRET) as AuthUserPayload;
+      req.user = decoded;
+    } catch (_) {}
+  }
+  next();
+};
+
 export const requireAdmin = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
   if (!req.user || (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'ADMIN')) {
     res.status(403).json({ error: 'Administrator access required' });

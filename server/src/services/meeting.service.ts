@@ -383,15 +383,96 @@ export class MeetingService {
   }
 
   /**
+   * Transfer host authority to another participant
+   */
+  async transferHost(meetingId: string, currentHostUserId: string, newHostUserId: string) {
+    const cleanFrom = currentHostUserId.replace(/-/g, '').trim();
+    const cleanTo = newHostUserId.replace(/-/g, '').trim();
+
+    try {
+      const meeting = await prisma.meeting.findUnique({
+        where: { id: meetingId },
+        include: {
+          participants: {
+            where: { leftAt: null },
+          },
+        },
+      });
+
+      if (meeting) {
+        const newHostParticipant = meeting.participants.find(
+          (p) => p.userId.replace(/-/g, '') === cleanTo
+        );
+
+        if (!newHostParticipant) {
+          throw new Error('Target participant not found in active meeting');
+        }
+
+        await prisma.$transaction([
+          prisma.participant.updateMany({
+            where: { meetingId, role: 'HOST' },
+            data: { role: 'GUEST' },
+          }),
+          prisma.participant.update({
+            where: { id: newHostParticipant.id },
+            data: { role: 'HOST' },
+          }),
+        ]);
+
+        return {
+          meetingCode: meeting.meetingCode,
+          newHost: {
+            userId: newHostParticipant.userId,
+            displayName: newHostParticipant.displayName,
+          },
+        };
+      }
+    } catch (e: any) {
+      if (e.message && e.message.includes('Target participant not found')) throw e;
+    }
+
+    // Memory fallback
+    const mem = inMemoryStore.meetings.find((m) => m.id === meetingId);
+    if (mem) {
+      return {
+        meetingCode: mem.meetingCode,
+        newHost: {
+          userId: newHostUserId,
+          displayName: 'Host',
+        },
+      };
+    }
+
+    throw new Error('Meeting not found');
+  }
+
+  /**
    * Host or Admin ends meeting for all
    */
   async endMeeting(meetingId: string, userId: string, isAdmin = false) {
+    const cleanUser = (userId || '').replace(/-/g, '').trim();
+
     try {
-      const meeting = await prisma.meeting.findUnique({ where: { id: meetingId } });
+      const meeting = await prisma.meeting.findUnique({
+        where: { id: meetingId },
+        include: {
+          participants: {
+            where: { leftAt: null },
+          },
+        },
+      });
+
       if (meeting) {
-        if (!isAdmin && meeting.hostId !== userId) {
+        const cleanHostId = meeting.hostId.replace(/-/g, '').trim();
+        const isOriginalHost = cleanHostId.length > 0 && cleanHostId === cleanUser;
+        const isCurrentHostParticipant = meeting.participants.some(
+          (p) => p.role === 'HOST' && p.userId.replace(/-/g, '').trim() === cleanUser
+        );
+
+        if (!isAdmin && !isOriginalHost && !isCurrentHostParticipant) {
           throw new Error('Only the meeting host or administrator can end the meeting');
         }
+
         return await prisma.meeting.update({
           where: { id: meetingId },
           data: { status: 'ENDED', endedAt: new Date() },
