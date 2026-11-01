@@ -120,7 +120,7 @@ export class MeetingController {
           res.status(404).json({ error: validation.reason || 'Meeting not found' });
           return;
         }
-        const file = req.file;
+        const file = (req as any).file;
         const userId = String(req.body?.userId || '').trim();
         const displayName = String(req.body?.displayName || 'Guest').trim() || 'Guest';
         if (!file || !userId) {
