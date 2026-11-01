@@ -1,5 +1,7 @@
+import http from 'http';
 import express from 'express';
 import cors from 'cors';
+import { WebSocketServer } from 'ws';
 import { ENV } from './config/env';
 import routes from './routes';
 import { errorHandler } from './middleware/error.middleware';
@@ -7,6 +9,7 @@ import { authService } from './services/auth.service';
 import { adminService } from './services/admin.service';
 import { meetingService } from './services/meeting.service';
 import { prisma } from './database/prisma';
+import { attachMeetingChat, closeMeetingRoom } from './services/meeting-chat';
 
 const app = express();
 
@@ -139,7 +142,9 @@ function scheduleHostCleanup() {
 const EMPTY_ROOM_CHECK_MS = 60 * 1000;
 
 function scheduleEmptyRoomCleanup() {
-  meetingService.endEmptyMeetings().catch((err) => {
+  meetingService.endEmptyMeetings().then((codes) => {
+    for (const code of codes) closeMeetingRoom(code);
+  }).catch((err) => {
     console.error('[MeetingCleanup] Failed to end empty meetings:', err);
   });
 }
@@ -159,7 +164,21 @@ async function start() {
     }
   }
 
-  app.listen(ENV.PORT, () => {
+  const server = http.createServer(app);
+  const sockets = new WebSocketServer({ noServer: true });
+  server.on('upgrade', (req, socket, head) => {
+    const pathOnly = (req.url || '').split('?')[0];
+    const match = pathOnly.match(/^\/api\/v1\/meetings\/([^/]+)\/chat$/);
+    if (!match) {
+      socket.destroy();
+      return;
+    }
+    sockets.handleUpgrade(req, socket, head, (ws) => {
+      attachMeetingChat(ws, decodeURIComponent(match[1])).catch(() => ws.close());
+    });
+  });
+
+  server.listen(ENV.PORT, () => {
     scheduleHostCleanup();
     scheduleEmptyRoomCleanup();
     setInterval(scheduleHostCleanup, HOST_CLEANUP_INTERVAL_MS);

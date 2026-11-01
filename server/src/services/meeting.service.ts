@@ -336,9 +336,9 @@ export class MeetingService {
   /**
    * Ends active meetings that have had nobody inside for 5 minutes.
    */
-  async endEmptyMeetings() {
+  async endEmptyMeetings(): Promise<string[]> {
     const cutoff = new Date(Date.now() - 5 * 60 * 1000);
-    let ended = 0;
+    const endedCodes: string[] = [];
 
     try {
       const meetings = await prisma.meeting.findMany({
@@ -347,14 +347,14 @@ export class MeetingService {
       });
 
       for (const meeting of meetings) {
-        const stillInside = meeting.participants.some((person) => person.leftAt == null);
+        const people = meeting.participants as { leftAt: Date | null }[];
+        const stillInside = people.some((person) => person.leftAt == null);
         if (stillInside) continue;
 
-        const lastLeft = meeting.participants.reduce<Date | null>((latest, person) => {
-          if (!person.leftAt) return latest;
-          if (!latest || person.leftAt > latest) return person.leftAt;
-          return latest;
-        }, null);
+        let lastLeft: Date | null = null;
+        for (const person of people) {
+          if (person.leftAt && (!lastLeft || person.leftAt > lastLeft)) lastLeft = person.leftAt;
+        }
         const emptySince = lastLeft ?? meeting.startedAt;
         if (emptySince > cutoff) continue;
 
@@ -362,7 +362,7 @@ export class MeetingService {
           where: { id: meeting.id },
           data: { status: 'ENDED', endedAt: new Date() },
         });
-        ended += 1;
+        endedCodes.push(meeting.meetingCode);
       }
     } catch (e) {
       const now = new Date();
@@ -372,14 +372,14 @@ export class MeetingService {
         if (meeting.emptySince > cutoff) continue;
         meeting.status = 'ENDED';
         meeting.endedAt = now;
-        ended += 1;
+        endedCodes.push(meeting.meetingCode);
       }
     }
 
-    if (ended > 0) {
-      console.log(`[MeetingService] Ended ${ended} empty meeting(s) after 5 minutes.`);
+    if (endedCodes.length > 0) {
+      console.log(`[MeetingService] Ended ${endedCodes.length} empty meeting(s) after 5 minutes.`);
     }
-    return ended;
+    return endedCodes;
   }
 
   /**

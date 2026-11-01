@@ -136,7 +136,7 @@ export class AdminService {
       if (expired.length === 0) return 0;
 
       await prisma.host.deleteMany({
-        where: { id: { in: expired.map((host) => host.id) } },
+        where: { id: { in: expired.map((host: { id: string }) => host.id) } },
       });
       console.log(`[AdminService] Deleted ${expired.length} host account(s) older than 30 days.`);
       return expired.length;

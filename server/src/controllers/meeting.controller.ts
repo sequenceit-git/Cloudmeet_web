@@ -1,6 +1,27 @@
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
+import multer from 'multer';
 import { Request, Response } from 'express';
 import { meetingService } from '../services/meeting.service';
+import { broadcastMeetingChat, closeMeetingRoom } from '../services/meeting-chat';
+import { meetingFileDir, newFileId, resolveMeetingFile, safeMeetingCode } from '../services/meeting-files';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (req, _file, cb) => {
+      const dir = meetingFileDir(String(req.params.code || ''));
+      fs.mkdirSync(dir, { recursive: true });
+      cb(null, dir);
+    },
+    filename: (_req, file, cb) => {
+      const stored = newFileId(file.originalname);
+      cb(null, stored.storedName);
+    },
+  }),
+  limits: { fileSize: 15 * 1024 * 1024 },
+});
 
 export class MeetingController {
   async createInstantMeeting(req: AuthenticatedRequest, res: Response) {
@@ -82,7 +103,64 @@ export class MeetingController {
         return;
       }
       const result = await meetingService.endMeeting(id, userId, isAdmin);
+      if (result?.meetingCode) closeMeetingRoom(result.meetingCode);
       res.json({ message: 'Meeting ended successfully', meeting: result });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  }
+
+  uploadMeetingFile = [
+    upload.single('file'),
+    async (req: Request, res: Response) => {
+      try {
+        const code = safeMeetingCode(String(req.params.code || ''));
+        const validation = await meetingService.validateMeetingCode(code);
+        if (!validation.valid) {
+          res.status(404).json({ error: validation.reason || 'Meeting not found' });
+          return;
+        }
+        const file = req.file;
+        const userId = String(req.body?.userId || '').trim();
+        const displayName = String(req.body?.displayName || 'Guest').trim() || 'Guest';
+        if (!file || !userId) {
+          res.status(400).json({ error: 'File and user id are required' });
+          return;
+        }
+        const id = path.basename(file.filename, path.extname(file.filename));
+        const url = `/api/v1/meetings/${encodeURIComponent(code)}/files/${id}`;
+        const kind = file.mimetype.startsWith('image/') ? 'image' : 'file';
+        broadcastMeetingChat(code, {
+          type: kind,
+          id: crypto.randomBytes(8).toString('hex'),
+          userId,
+          displayName,
+          url,
+          name: file.originalname,
+          size: file.size,
+          at: new Date().toISOString(),
+        });
+        res.status(201).json({ id, url, name: file.originalname, size: file.size, type: kind });
+      } catch (err: any) {
+        res.status(400).json({ error: err.message || 'Upload failed' });
+      }
+    },
+  ];
+
+  async downloadMeetingFile(req: Request, res: Response) {
+    try {
+      const code = safeMeetingCode(String(req.params.code || ''));
+      const validation = await meetingService.validateMeetingCode(code);
+      if (!validation.valid) {
+        res.status(404).json({ error: 'Meeting not found' });
+        return;
+      }
+      const filePath = resolveMeetingFile(code, String(req.params.fileId || ''));
+      if (!filePath) {
+        res.status(404).json({ error: 'File not found' });
+        return;
+      }
+      res.sendFile(filePath);
     } catch (err: any) {
       res.status(400).json({ error: err.message });
     }

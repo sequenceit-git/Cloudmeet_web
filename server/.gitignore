@@ -1,5 +1,6 @@
 node_modules/
 dist/
 .env
+meeting-files/
 *.log
 npm-debug.log*
