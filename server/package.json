@@ -8,6 +8,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "prisma:generate": "node ./scripts/with-root-env.cjs prisma generate",
+    "prisma:push": "node ./scripts/with-root-env.cjs prisma db push",
     "prisma:migrate": "node ./scripts/with-root-env.cjs prisma migrate dev",
     "prisma:studio": "node ./scripts/with-root-env.cjs prisma studio"
   },
