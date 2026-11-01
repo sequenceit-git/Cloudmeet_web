@@ -25,8 +25,8 @@ export const ENV = {
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
   
   // Tencent TRTC Configuration
-  TRTC_SDK_APP_ID: parseInt(process.env.TRTC_SDK_APP_ID || process.env.VITE_TRTC_SDK_APP_ID || '1600168815', 10),
-  TRTC_SECRET_KEY: process.env.TRTC_SECRET_KEY || '825ab8e717d36d625f309c8a2fd5881ed1706c0d30d3090ff643b6a10c01d38c',
+  TRTC_SDK_APP_ID: parseInt(process.env.TRTC_SDK_APP_ID || process.env.VITE_TRTC_SDK_APP_ID || '1600170349', 10),
+  TRTC_SECRET_KEY: process.env.TRTC_SECRET_KEY || '8490a63f0fc629b77c80408fe9edb025c70d0f57626b0954480bfbc736c4c3fa',
   TRTC_EXPIRE_TIME: parseInt(process.env.TRTC_EXPIRE_TIME || '86400', 10), // 24 hours in seconds
 
   // Admin panel login. Edit these in the root .env and restart the API.
