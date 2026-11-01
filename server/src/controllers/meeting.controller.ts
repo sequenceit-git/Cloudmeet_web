@@ -11,13 +11,20 @@ import { AuthenticatedRequest } from '../middleware/auth.middleware';
 const upload = multer({
   storage: multer.diskStorage({
     destination: (req, _file, cb) => {
-      const dir = meetingFileDir(String(req.params.code || ''));
-      fs.mkdirSync(dir, { recursive: true });
-      cb(null, dir);
+      try {
+        const dir = meetingFileDir(String(req.params.code || ''));
+        cb(null, dir);
+      } catch (err: any) {
+        cb(err, '');
+      }
     },
     filename: (_req, file, cb) => {
-      const stored = newFileId(file.originalname);
-      cb(null, stored.storedName);
+      try {
+        const stored = newFileId(file.originalname || 'file');
+        cb(null, stored.storedName);
+      } catch (err: any) {
+        cb(err, '');
+      }
     },
   }),
   limits: { fileSize: 15 * 1024 * 1024 },

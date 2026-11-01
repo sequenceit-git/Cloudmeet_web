@@ -32,7 +32,13 @@ export function broadcastMeetingChat(code: string, message: ChatPayload) {
   if (!room) return;
   const payload = JSON.stringify(message);
   for (const member of room) {
-    if (member.ws.readyState === WebSocket.OPEN) member.ws.send(payload);
+    try {
+      if (member.ws.readyState === WebSocket.OPEN) {
+        member.ws.send(payload);
+      }
+    } catch (err) {
+      console.error('[Chat Broadcast Error]:', err);
+    }
   }
 }
 

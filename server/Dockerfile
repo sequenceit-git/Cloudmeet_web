@@ -46,6 +46,9 @@ RUN npm install --omit=dev && npx prisma generate
 # Copy compiled code from builder
 COPY --from=builder /app/dist ./dist
 
+# Ensure storage directories exist and are owned by node user
+RUN mkdir -p /app/meeting-files /tmp/meeting-files && chown -R node:node /app /tmp/meeting-files
+
 # Run as non-root node user for security
 USER node
 
