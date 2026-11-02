@@ -28,6 +28,15 @@ export class MeetingService {
         throw new Error('Host account is disabled');
       }
 
+      // Ensure host can only initiate 1 meeting at a time
+      const activeMeeting = await prisma.meeting.findFirst({
+        where: { hostId, status: 'ACTIVE' },
+        select: { id: true, meetingCode: true, title: true },
+      });
+      if (activeMeeting) {
+        throw new Error(`HOST_ALREADY_IN_MEETING:${activeMeeting.meetingCode}:${activeMeeting.id}`);
+      }
+
       const meeting = await prisma.meeting.create({
         data: {
           meetingCode,
@@ -67,11 +76,18 @@ export class MeetingService {
         },
       };
     } catch (e: any) {
-      if (e.message && (e.message.includes('not found') || e.message.includes('disabled'))) {
+      if (e.message && (e.message.includes('not found') || e.message.includes('disabled') || e.message.startsWith('HOST_ALREADY_IN_MEETING:'))) {
         throw e;
       }
 
-      // Memory fallback
+      // Memory fallback: Ensure host can only initiate 1 meeting at a time
+      const activeMem = inMemoryStore.meetings.find(
+        (m) => m.hostId === hostId && m.status === 'ACTIVE'
+      );
+      if (activeMem) {
+        throw new Error(`HOST_ALREADY_IN_MEETING:${activeMem.meetingCode}:${activeMem.id}`);
+      }
+
       const memHost = inMemoryStore.hosts.find((h) => h.id === hostId);
       const hostName = memHost?.displayName || 'Host';
       const hostUsername = memHost?.username || 'host';

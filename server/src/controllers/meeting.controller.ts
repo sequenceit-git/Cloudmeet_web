@@ -42,6 +42,20 @@ export class MeetingController {
       const result = await meetingService.createInstantMeeting(hostId, title);
       res.status(201).json(result);
     } catch (err: any) {
+      if (err.message && err.message.startsWith('HOST_ALREADY_IN_MEETING:')) {
+        const parts = err.message.split(':');
+        const activeCode = parts[1] || '';
+        const activeId = parts[2] || '';
+        res.status(409).json({
+          code: 'HOST_ALREADY_IN_MEETING',
+          error: `You already have an active meeting (${activeCode}). Please end it before creating a new one.`,
+          activeMeeting: {
+            id: activeId,
+            meetingCode: activeCode,
+          },
+        });
+        return;
+      }
       res.status(400).json({ error: err.message });
     }
   }
@@ -195,7 +209,13 @@ export class MeetingController {
         res.status(404).json({ error: 'File not found' });
         return;
       }
-      res.sendFile(filePath);
+      const shouldDownload = req.query.download === '1' || req.query.download === 'true';
+      const customFilename = req.query.filename ? String(req.query.filename) : undefined;
+      if (shouldDownload) {
+        res.download(filePath, customFilename || path.basename(filePath));
+      } else {
+        res.sendFile(filePath);
+      }
     } catch (err: any) {
       res.status(400).json({ error: err.message });
     }
